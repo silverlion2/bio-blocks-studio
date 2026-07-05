@@ -2020,7 +2020,7 @@ function BlockDropPreview({
       style={placementStyle}
       className={cn(
         "pointer-events-none rounded-[20px] border-2 border-dashed border-[#1479FF]/45 bg-[#EDF6FF]/70",
-        floating ? "absolute z-10 shadow-[0_16px_45px_rgba(20,121,255,0.12)]" : "",
+        floating ? "absolute z-10" : "",
         blockSizeClassByDevice[device][displaySize]
       )}
     >
