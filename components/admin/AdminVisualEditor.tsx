@@ -1904,13 +1904,13 @@ function EditableSection({
     Boolean(dragPreviewBlock) &&
     dragPreviewPlacement?.targetSectionId === section.id &&
     dragPreviewBlock?.sectionId === section.id;
-  const previewIndex =
-    dragPreviewBlock && dragPreviewPlacement?.targetSectionId === section.id
-      ? Math.max(0, Math.min(dragPreviewPlacement.targetIndex, blocks.length))
-      : null;
-  const shouldRenderDropPreview = previewIndex !== null;
   const renderedBlocks =
     isSameSectionPreview && dragPreviewBlock ? blocks.filter((block) => block.id !== dragPreviewBlock.id) : blocks;
+  const previewIndex =
+    dragPreviewBlock && dragPreviewPlacement?.targetSectionId === section.id
+      ? Math.max(0, Math.min(dragPreviewPlacement.targetIndex, renderedBlocks.length))
+      : null;
+  const shouldRenderDropPreview = previewIndex !== null;
   const gridItems: Array<{ type: "block"; block: Block } | { type: "preview"; block: Block; placement?: BlockPlacementDraft }> = [];
   renderedBlocks.forEach((block, index) => {
     if (shouldRenderDropPreview && previewIndex === index && dragPreviewBlock) {
