@@ -1,0 +1,213 @@
+import type { SiteConfig } from "@/types/site-config";
+
+const now = "2026-07-03T00:00:00.000Z";
+
+export const defaultSiteConfig: SiteConfig = {
+  version: 1,
+  profile: {
+    avatarUrl: "/default-avatar.svg",
+    displayName: "Your Name",
+    username: "your-handle",
+    headline: "Builder / Designer / Writer",
+    bio: "A short introduction about who you are, what you build, and where people can find your work.",
+    location: "Your city",
+    tags: ["Portfolio", "Projects", "Writing", "Links"],
+    email: "",
+    socialLinks: [
+      {
+        id: "github",
+        label: "GitHub",
+        icon: "github",
+        href: "https://github.com/your-handle",
+        isVisible: true,
+        sortOrder: 1
+      },
+      {
+        id: "x",
+        label: "X",
+        icon: "twitter",
+        href: "https://x.com/",
+        isVisible: true,
+        sortOrder: 2
+      }
+    ],
+    moduleOrder: [
+      "avatar",
+      "name",
+      "headline",
+      "bio",
+      "tags",
+      "location",
+      "socialLinks",
+      "contact"
+    ],
+    visibleModules: {
+      avatar: true,
+      name: true,
+      headline: true,
+      bio: true,
+      tags: true,
+      location: true,
+      socialLinks: true,
+      contact: true,
+      latestPosts: false
+    }
+  },
+  sections: [
+    {
+      id: "doing",
+      title: "Featured work",
+      emoji: "build",
+      description: "Projects, products, and experiments you want people to notice first.",
+      titleAlign: "left",
+      titleSize: "md",
+      layout: "grid",
+      gap: "md",
+      sortOrder: 1,
+      isVisible: true,
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: "daily",
+      title: "Notes",
+      emoji: "sparkle",
+      description: "Short updates, writing, and personal highlights.",
+      titleAlign: "left",
+      titleSize: "md",
+      layout: "grid",
+      gap: "md",
+      sortOrder: 2,
+      isVisible: true,
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: "social",
+      title: "Social",
+      emoji: "link",
+      description: "",
+      titleAlign: "left",
+      titleSize: "md",
+      layout: "grid",
+      gap: "md",
+      sortOrder: 3,
+      isVisible: true,
+      createdAt: now,
+      updatedAt: now
+    }
+  ],
+  blocks: [
+    {
+      id: "flagship-project",
+      sectionId: "doing",
+      title: "Flagship project",
+      subtitle: "A product or case study",
+      description: "Use this block for your main app, startup, portfolio case, or open-source project.",
+      type: "project",
+      size: "large-square",
+      coverImage: "",
+      icon: "chef-hat",
+      badge: "Featured",
+      href: "https://example.com",
+      actionType: "link",
+      openInNewTab: true,
+      backgroundColor: "",
+      textColor: "",
+      metadata: {},
+      isVisible: true,
+      isFeatured: true,
+      sortOrder: 1,
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: "health-trip",
+      sectionId: "doing",
+      title: "Side project",
+      subtitle: "An experiment or prototype",
+      description: "Use this card for a smaller project, design exploration, or work in progress.",
+      type: "project",
+      size: "large-square",
+      coverImage: "",
+      icon: "map",
+      badge: "WIP",
+      href: "",
+      actionType: "none",
+      openInNewTab: false,
+      backgroundColor: "",
+      textColor: "",
+      metadata: {},
+      isVisible: true,
+      isFeatured: false,
+      sortOrder: 2,
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: "daily-note",
+      sectionId: "daily",
+      title: "Latest note",
+      subtitle: "What are you working on right now?",
+      description: "Share a short update, announcement, or personal note.",
+      type: "status",
+      size: "wide",
+      coverImage: "",
+      icon: "activity",
+      badge: "MVP",
+      href: "",
+      actionType: "modal",
+      openInNewTab: false,
+      backgroundColor: "#F8FAFC",
+      textColor: "",
+      metadata: {},
+      isVisible: true,
+      isFeatured: false,
+      sortOrder: 1,
+      createdAt: now,
+      updatedAt: now
+    },
+    {
+      id: "github",
+      sectionId: "social",
+      title: "GitHub",
+      subtitle: "@your-handle",
+      description: "",
+      type: "social",
+      size: "small-square",
+      coverImage: "",
+      icon: "github",
+      badge: "",
+      href: "https://github.com/your-handle",
+      actionType: "link",
+      openInNewTab: true,
+      backgroundColor: "",
+      textColor: "",
+      metadata: {},
+      isVisible: true,
+      isFeatured: false,
+      sortOrder: 1,
+      createdAt: now,
+      updatedAt: now
+    }
+  ],
+  theme: {
+    primaryColor: "#1677FF",
+    backgroundColor: "#FFFFFF",
+    cardBackground: "#FFFFFF",
+    textColor: "#111111",
+    mutedTextColor: "#666666",
+    borderColor: "#EAEAEA",
+    cardRadius: "2xl",
+    cardShadow: "soft",
+    fontFamily: "system"
+  },
+  settings: {
+    siteTitle: "Personal Site Studio",
+    siteDescription: "A visual personal homepage template with an editable admin.",
+    enableImagePreview: true,
+    enableAnimation: true,
+    enablePublicShare: true
+  },
+  updatedAt: now
+};
