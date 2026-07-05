@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/field";
 
-export function AdminLoginForm() {
+export function AdminLoginForm({ projectName }: { projectName: string }) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +43,7 @@ export function AdminLoginForm() {
           <div className="mx-auto grid h-12 w-12 place-items-center rounded-2xl bg-[#F1F5F9]">
             <Lock className="h-5 w-5 text-[#1677FF]" />
           </div>
-          <h1 className="text-2xl font-semibold">Admin Login</h1>
+          <h1 className="text-2xl font-semibold">{projectName}</h1>
           <p className="text-sm text-[#64748B]">Enter the admin password to edit this bio site.</p>
         </div>
         <Field label="Password">

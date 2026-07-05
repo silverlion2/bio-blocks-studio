@@ -66,6 +66,15 @@ config/site-config.json
 
 The config file is public-readable through its Blob URL, so do not store secrets, private notes, unpublished credentials, or sensitive personal data inside `SiteConfig`.
 
+The admin editor can export and import this config as JSON from **项目设置**. Importing validates the JSON and updates the current editor draft first; the imported config is written to Vercel Blob only after the admin clicks save.
+
+Current editable project settings include:
+
+- `settings.projectName`: admin top bar and login page name.
+- `settings.siteTitle`: public browser/metadata title.
+- `settings.siteDescription`: public metadata description.
+- `settings.siteUrl`: canonical public deployment origin used for metadata.
+
 ## Local Development
 
 The app can run without Vercel Blob:
@@ -82,7 +91,9 @@ The app can run without Vercel Blob:
 4. Set `BLOB_READ_WRITE_TOKEN`.
 5. Set `ADMIN_PASSWORD_HASH`.
 6. Set a random `SESSION_SECRET` of at least 32 characters.
-7. Run a production build before publishing major changes.
+7. Sign in at `/admin/login`, open **项目设置**, and confirm project name, public title, description, and URL.
+8. Save once so the production Blob config is initialized.
+9. Run a production build before publishing major changes.
 
 ## Validation Commands
 

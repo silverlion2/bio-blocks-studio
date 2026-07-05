@@ -121,8 +121,10 @@ const themeSchema = z.object({
 });
 
 const settingsSchema = z.object({
+  projectName: z.string().min(1).default("Bio Template Editor"),
   siteTitle: z.string(),
   siteDescription: z.string(),
+  siteUrl: z.string().default(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   enableImagePreview: z.boolean(),
   enableAnimation: z.boolean(),
   enablePublicShare: z.boolean(),

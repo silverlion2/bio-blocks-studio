@@ -24,6 +24,7 @@ import {
   BriefcaseBusiness,
   ChevronDown,
   Copy,
+  Download,
   FileText,
   Globe2,
   Github,
@@ -41,11 +42,13 @@ import {
   RectangleHorizontal,
   RectangleVertical,
   Save,
+  Settings,
   Smartphone,
   Square,
   Trash2,
   Twitter,
   Type,
+  Upload,
   X,
   Youtube
 } from "lucide-react";
@@ -84,7 +87,7 @@ type ModalState =
   | { type: "section"; sectionId: string }
   | { type: "block"; blockId: string }
   | { type: "add-block" }
-  | { type: "theme" }
+  | { type: "project-settings" }
   | null;
 
 const blockTemplates: {
@@ -355,6 +358,33 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
   function update(next: SiteConfig) {
     setConfig(next);
     setIsDirty(true);
+  }
+
+  function exportConfig() {
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const safeName = (config.settings.projectName || "site-config").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    link.href = url;
+    link.download = `${safeName || "site-config"}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function importConfig(file: File) {
+    const text = await file.text();
+    const parsed = JSON.parse(text) as unknown;
+    const result = validateSiteConfig(parsed);
+
+    if (!result.success) {
+      toast.error("导入失败", { description: result.error });
+      return;
+    }
+
+    update(result.data);
+    toast.success("配置已导入", { description: "检查无误后点击保存才会覆盖线上配置。" });
   }
 
   function patchProfile(patch: Partial<Profile>) {
@@ -855,13 +885,13 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
       <header className="sticky top-0 z-40 border-b border-[#EAF0F8] bg-white/88 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[1180px] items-center justify-between gap-3 px-5 py-3">
           <div>
-            <p className="text-sm font-semibold">Bio Template Editor</p>
+            <p className="text-sm font-semibold">{config.settings.projectName}</p>
             <p className="text-xs text-[#6B7280]">{isDirty ? "有未保存修改" : "已保存"} · 所见即所得编辑</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" onClick={() => setModal({ type: "theme" })}>
-              <Palette className="h-4 w-4" />
-              风格
+            <Button variant="secondary" size="sm" onClick={() => setModal({ type: "project-settings" })}>
+              <Settings className="h-4 w-4" />
+              项目设置
             </Button>
             <Button size="sm" onClick={save} disabled={isSaving || !validation.success}>
               <Save className="h-4 w-4" />
@@ -1079,7 +1109,9 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
             />
           ) : null}
           {modal.type === "add-block" ? <AddBlockDialog onAdd={addBlock} /> : null}
-          {modal.type === "theme" ? <ThemeQuickForm config={config} onChange={update} /> : null}
+          {modal.type === "project-settings" ? (
+            <ProjectSettingsForm config={config} onChange={update} onExport={exportConfig} onImport={importConfig} />
+          ) : null}
         </EditorModal>
       ) : null}
     </main>
@@ -2858,25 +2890,135 @@ function AddBlockDialog({ onAdd }: { onAdd: (template: (typeof blockTemplates)[n
   );
 }
 
-function ThemeQuickForm({ config, onChange }: { config: SiteConfig; onChange: (config: SiteConfig) => void }) {
+function ProjectSettingsForm({
+  config,
+  onChange,
+  onExport,
+  onImport
+}: {
+  config: SiteConfig;
+  onChange: (config: SiteConfig) => void;
+  onExport: () => void;
+  onImport: (file: File) => Promise<void>;
+}) {
   const theme = config.theme;
+  const settings = config.settings;
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
   function patchTheme(patch: Partial<SiteConfig["theme"]>) {
     onChange({ ...config, theme: { ...theme, ...patch } });
   }
+
+  function patchSettings(patch: Partial<SiteConfig["settings"]>) {
+    onChange({ ...config, settings: { ...settings, ...patch } });
+  }
+
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <Field label="主色">
-        <Input type="color" value={theme.primaryColor} onChange={(event) => patchTheme({ primaryColor: event.target.value })} />
-      </Field>
-      <Field label="背景">
-        <Input type="color" value={theme.backgroundColor} onChange={(event) => patchTheme({ backgroundColor: event.target.value })} />
-      </Field>
-      <Field label="文字">
-        <Input type="color" value={theme.textColor} onChange={(event) => patchTheme({ textColor: event.target.value })} />
-      </Field>
-      <Field label="边框">
-        <Input type="color" value={theme.borderColor} onChange={(event) => patchTheme({ borderColor: event.target.value })} />
-      </Field>
+    <div className="grid gap-6 text-[#333]">
+      <section className="grid gap-3">
+        <h4 className="text-sm font-bold text-[#111]">项目</h4>
+        <Field label="项目名称/project name">
+          <Input value={settings.projectName} onChange={(event) => patchSettings({ projectName: event.target.value })} />
+        </Field>
+      </section>
+
+      <section className="grid gap-3">
+        <h4 className="text-sm font-bold text-[#111]">网页</h4>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="网页标题/site title">
+            <Input value={settings.siteTitle} onChange={(event) => patchSettings({ siteTitle: event.target.value })} />
+          </Field>
+          <Field label="公开站点 URL/public URL">
+            <Input
+              value={settings.siteUrl}
+              placeholder="https://example.com"
+              onChange={(event) => patchSettings({ siteUrl: event.target.value })}
+            />
+          </Field>
+          <Field label="网页描述/site description" className="md:col-span-2">
+            <Textarea
+              value={settings.siteDescription}
+              onChange={(event) => patchSettings({ siteDescription: event.target.value })}
+              className="min-h-24"
+            />
+          </Field>
+        </div>
+      </section>
+
+      <section className="grid gap-3">
+        <h4 className="text-sm font-bold text-[#111]">外观</h4>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="主色">
+            <Input type="color" value={theme.primaryColor} onChange={(event) => patchTheme({ primaryColor: event.target.value })} />
+          </Field>
+          <Field label="背景">
+            <Input type="color" value={theme.backgroundColor} onChange={(event) => patchTheme({ backgroundColor: event.target.value })} />
+          </Field>
+          <Field label="卡片背景">
+            <Input type="color" value={theme.cardBackground} onChange={(event) => patchTheme({ cardBackground: event.target.value })} />
+          </Field>
+          <Field label="文字">
+            <Input type="color" value={theme.textColor} onChange={(event) => patchTheme({ textColor: event.target.value })} />
+          </Field>
+          <Field label="边框">
+            <Input type="color" value={theme.borderColor} onChange={(event) => patchTheme({ borderColor: event.target.value })} />
+          </Field>
+          <Field label="字体">
+            <Select value={theme.fontFamily} onChange={(event) => patchTheme({ fontFamily: event.target.value as SiteConfig["theme"]["fontFamily"] })}>
+              <option value="system">system</option>
+              <option value="rounded">rounded</option>
+              <option value="mono">mono</option>
+            </Select>
+          </Field>
+        </div>
+        <div className="flex flex-wrap gap-4 text-sm text-[#475569]">
+          <label className="flex items-center gap-2">
+            <Checkbox checked={settings.enableAnimation} onChange={(event) => patchSettings({ enableAnimation: event.target.checked })} />
+            动画/animation
+          </label>
+          <label className="flex items-center gap-2">
+            <Checkbox checked={settings.enableImagePreview} onChange={(event) => patchSettings({ enableImagePreview: event.target.checked })} />
+            图片预览/image preview
+          </label>
+          <label className="flex items-center gap-2">
+            <Checkbox checked={settings.enablePublicShare} onChange={(event) => patchSettings({ enablePublicShare: event.target.checked })} />
+            公开分享/public share
+          </label>
+        </div>
+      </section>
+
+      <section className="grid gap-3 rounded-[18px] border border-[#EAEAEA] bg-[#FAFAFA] p-4">
+        <div>
+          <h4 className="text-sm font-bold text-[#111]">配置</h4>
+          <p className="mt-1 text-sm text-[#64748B]">导入会覆盖当前编辑器里的草稿，确认后还需要点击保存才会发布。</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="secondary" size="sm" onClick={onExport}>
+            <Download className="h-4 w-4" />
+            导出配置
+          </Button>
+          <Button type="button" variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>
+            <Upload className="h-4 w-4" />
+            导入覆盖
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={async (event) => {
+              const file = event.target.files?.[0];
+              event.target.value = "";
+              if (!file) return;
+              try {
+                await onImport(file);
+              } catch {
+                toast.error("导入失败", { description: "请选择有效的 JSON 配置文件。" });
+              }
+            }}
+          />
+        </div>
+      </section>
     </div>
   );
 }
@@ -2901,5 +3043,5 @@ function modalTitle(modal: NonNullable<ModalState>) {
   if (modal.type === "section") return "编辑 Section";
   if (modal.type === "block") return "编辑 Block";
   if (modal.type === "add-block") return "添加 Block";
-  return "主题设置";
+  return "项目设置";
 }

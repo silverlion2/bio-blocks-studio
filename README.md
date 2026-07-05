@@ -9,10 +9,12 @@ This project is intended to become a reusable public template. The current sampl
 - Public personal bio / portfolio page
 - Password-protected `/admin` editor
 - Visual desktop and mobile layout editing
+- Project settings for admin naming, public page title, description, URL, and simple theme controls
 - Block cards for projects, links, images, text, status updates, videos, and social links
 - Text-section rows that can be moved independently from block cards
 - Top-level block grid for cards that do not belong to a section
 - Image upload and crop workflow with fixed and custom crop ratios
+- JSON config export and import from the admin editor
 - JSON config persisted through Vercel Blob
 - No traditional database required
 
@@ -86,7 +88,13 @@ The site is driven by one validated config object:
 - `sections`: text rows used as visual separators or headings
 - `blocks`: project/link/image/text/social/video/status cards
 - `theme`: colors, radius, shadow, and font settings
-- `settings`: site settings and internal layout order metadata
+- `settings`: project name, public site title, description, URL, feature toggles, and internal layout order metadata
+
+The admin top bar uses `settings.projectName`. The public page metadata uses:
+
+- `settings.siteTitle`
+- `settings.siteDescription`
+- `settings.siteUrl`
 
 Config is saved to Vercel Blob at:
 
@@ -110,6 +118,14 @@ images/qrcode
 3. Enable Vercel Blob for the project.
 4. Deploy.
 5. Visit `/admin/login` and sign in with the password used to create `ADMIN_PASSWORD_HASH`.
+6. Open **项目设置** in the admin editor and set the project name, public site title, description, and public URL.
+7. Save once to persist the production config to Vercel Blob.
+
+## Config Import and Export
+
+The admin editor can export the full `SiteConfig` as JSON from **项目设置**. Importing a JSON config replaces the current editor draft only; click **保存** after reviewing it to write the imported config to Vercel Blob.
+
+Use exported configs for backup, migration between deployments, or local-to-production handoff. Do not put secrets or private notes in the config because the Blob-hosted config is public-readable.
 
 ## Validation
 

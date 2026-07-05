@@ -4,8 +4,6 @@ import "@/app/globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
-  title: "Personal Site Studio",
-  description: "A visual personal homepage template with an editable admin.",
   icons: {
     icon: "/icon"
   }

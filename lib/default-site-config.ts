@@ -203,8 +203,10 @@ export const defaultSiteConfig: SiteConfig = {
     fontFamily: "system"
   },
   settings: {
+    projectName: "Bio Template Editor",
     siteTitle: "Personal Site Studio",
     siteDescription: "A visual personal homepage template with an editable admin.",
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
     enableImagePreview: true,
     enableAnimation: true,
     enablePublicShare: true

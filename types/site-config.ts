@@ -4,8 +4,10 @@ import type { Section } from "@/types/section";
 import type { ThemeConfig } from "@/types/theme";
 
 export type SiteSettings = {
+  projectName: string;
   siteTitle: string;
   siteDescription: string;
+  siteUrl: string;
   enableImagePreview: boolean;
   enableAnimation: boolean;
   enablePublicShare: boolean;
