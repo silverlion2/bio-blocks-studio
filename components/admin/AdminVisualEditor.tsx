@@ -1445,6 +1445,10 @@ function getContentFlowForBlockMove(renderModel: ReturnType<typeof buildRenderMo
 }
 
 function DragOverlayBlockPreview({ block, width, height }: { block: Block; width: number; height: number }) {
+  if (isSectionTextBlock(block)) {
+    return <DragOverlayTextBlockPreview block={block} width={width} height={height} />;
+  }
+
   return (
     <div
       className="relative box-border overflow-hidden rounded-[20px] border border-[#111] bg-white p-4 ring-2 ring-[#1479FF]/25"
@@ -1474,6 +1478,33 @@ function DragOverlayBlockPreview({ block, width, height }: { block: Block; width
           ) : null}
         </div>
       )}
+    </div>
+  );
+}
+
+function DragOverlayTextBlockPreview({ block, width, height }: { block: Block; width: number; height: number }) {
+  const rawTitleSize = block.metadata?.titleSize;
+  const rawTitleAlign = block.metadata?.titleAlign;
+  const titleSize = rawTitleSize === "sm" || rawTitleSize === "lg" ? rawTitleSize : "md";
+  const titleAlign = rawTitleAlign === "center" || rawTitleAlign === "right" ? rawTitleAlign : "left";
+  const subtitle = block.subtitle || block.description;
+  const titleClass = titleSize === "lg" ? "text-[25px]" : titleSize === "sm" ? "text-lg" : "text-[22px]";
+
+  return (
+    <div
+      className={cn(
+        "flex box-border h-full w-full flex-col justify-center overflow-hidden rounded-[20px] border border-[#111] bg-white px-3.5 py-2.5 ring-2 ring-[#1479FF]/25",
+        titleAlign === "center" && "items-center text-center",
+        titleAlign === "right" && "items-end text-right",
+        titleAlign === "left" && "items-start text-left"
+      )}
+      style={{ width, height }}
+    >
+      <h3 className={cn("max-w-full truncate font-bold leading-tight tracking-normal text-[#111]", titleClass)}>
+        {block.title.trim()}
+        {block.icon ? <span className="ml-1 text-[#1479FF]">{block.icon}</span> : null}
+      </h3>
+      {subtitle ? <p className="mt-1 max-w-full truncate text-sm leading-5 text-[#64748B]">{subtitle}</p> : null}
     </div>
   );
 }
