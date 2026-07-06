@@ -217,7 +217,6 @@ type SectionDragPreview = {
 
 type EditorContentItem =
   | { id: string; type: "top-level-blocks"; blocks: Block[]; sortOrder: number }
-  | { id: string; type: "top-level-block-preview"; block: Block; sortOrder: number }
   | { id: string; type: "text-block"; block: Block; sortOrder: number }
   | { id: string; type: "text-block-preview"; block: Block };
 
@@ -1167,6 +1166,7 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
                         <EditableSection
                           key={item.id}
                           section={topLevelSection}
+                          contentGroupId={item.id}
                           blocks={item.blocks}
                           onEditSection={() => undefined}
                           onDeleteSection={() => undefined}
@@ -1196,41 +1196,9 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
                             activeDragBlock !== null &&
                             !isSectionTextBlock(activeDragBlock) &&
                             dragPreviewPlacement?.targetSectionId === topLevelBlockSectionId &&
-                            dragPreviewPlacement.targetContentIndex === undefined &&
                             (editorContentItems.filter((contentItem) => contentItem.type === "top-level-blocks").length === 1 ||
                               item.blocks.some((block) => block.id === activeDragBlockId))
                           }
-                        />
-                      ) : item.type === "top-level-block-preview" ? (
-                        <EditableSection
-                          key={item.id}
-                          section={topLevelSection}
-                          blocks={[]}
-                          onEditSection={() => undefined}
-                          onDeleteSection={() => undefined}
-                          onEditBlock={(blockId) => setModal({ type: "block", blockId })}
-                          onDeleteBlock={deleteBlock}
-                          onSelectBlock={setSelectedBlockId}
-                          device={editorDevice}
-                          activeDragBlockId={activeDragBlockId}
-                          dragPreviewBlock={item.block}
-                          dragPreviewPlacement={dragPreviewPlacement}
-                          onResizeBlock={patchBlockSizeForDevice}
-                          onResizePreview={setResizePreviewSize}
-                          resizeDrafts={resizeDrafts}
-                          onResizeDraft={(blockId, size) =>
-                            setResizeDrafts((current) => {
-                              if (!size) {
-                                const next = { ...current };
-                                delete next[blockId];
-                                return next;
-                              }
-                              return { ...current, [blockId]: size };
-                            })
-                          }
-                          sectionHandleProps={{}}
-                          hideHeader
-                          showDragPreview
                         />
                       ) : item.type === "text-block-preview" ? (
                         <TextBlockDropPreview key={item.id} block={item.block} />
@@ -1605,11 +1573,19 @@ function getEditorContentItems(
     activeBlock
   ) {
     const flowItems = getContentFlowForBlockMove(renderModel, activeBlock.id);
-    const nextItems: Array<ContentFlowItem | { type: "top-level-block-preview"; id: string; block: Block } | { type: "text-block-preview"; id: string; block: Block }> = [...flowItems];
+    const nextItems: Array<ContentFlowItem | { type: "text-block-preview"; id: string; block: Block }> = [...flowItems];
     nextItems.splice(Math.max(0, Math.min(blockPreview.targetContentIndex, flowItems.length)), 0, {
-      type: isSectionTextBlock(activeBlock) ? "text-block-preview" : "top-level-block-preview",
-      id: `${isSectionTextBlock(activeBlock) ? "text-block" : "top-level-block"}-preview:${activeBlock.id}`,
-      block: activeBlock
+      ...(isSectionTextBlock(activeBlock)
+        ? {
+            type: "text-block-preview" as const,
+            id: `text-block-preview:${activeBlock.id}`,
+            block: activeBlock
+          }
+        : {
+            type: "top-level-block" as const,
+            id: activeBlock.id,
+            block: activeBlock
+          })
     });
     return contentFlowItemsToEditorItems(nextItems);
   }
@@ -1633,7 +1609,6 @@ function contentFlowItemsToEditorItems(
   nextItems: Array<
     | ContentFlowItem
     | { type: "section-preview"; id: string; section: Section }
-    | { type: "top-level-block-preview"; id: string; block: Block }
     | { type: "text-block-preview"; id: string; block: Block }
   >
 ): EditorContentItem[] {
@@ -1660,8 +1635,6 @@ function contentFlowItemsToEditorItems(
     flushBlocks();
     if (item.type === "section-preview") {
       contentItems.push({ id: item.id, type: "text-block-preview", block: sectionToPreviewBlock(item.section) });
-    } else if (item.type === "top-level-block-preview") {
-      contentItems.push({ id: item.id, type: "top-level-block-preview", block: item.block, sortOrder: 0 });
     } else if (item.type === "text-block-preview") {
       contentItems.push(item);
     } else if (item.type === "section") {
@@ -1914,7 +1887,7 @@ function getBlockDragPreviewPlacement({
     return {
       blockId: activeBlock.id,
       targetSectionId: topLevelBlockSectionId,
-      targetIndex: 0,
+      targetIndex: contentTarget.targetIndex,
       targetContentIndex: contentTarget.targetContentIndex
     };
   }
@@ -1965,6 +1938,11 @@ function getTopLevelContentTargetFromDrag(
   if (!intentPoint) return null;
 
   const flowItems = getContentFlowForBlockMove(buildRenderModel(config), activeBlock.id);
+  const groupTarget = getTopLevelContentGroupTarget(config, activeBlock, intentPoint);
+  if (groupTarget) {
+    return groupTarget;
+  }
+
   for (let index = 0; index < flowItems.length; index += 1) {
     const item = flowItems[index];
     if (item.type !== "text-block" && item.type !== "section") continue;
@@ -1979,10 +1957,84 @@ function getTopLevelContentTargetFromDrag(
     if (!isVerticallyNear || !isHorizontallyNear) continue;
 
     const insertAfter = intentPoint.y > rect.top + rect.height / 2;
-    return { targetContentIndex: index + (insertAfter ? 1 : 0) };
+    return { targetContentIndex: index + (insertAfter ? 1 : 0), targetIndex: 0 };
   }
 
   return null;
+}
+
+function getTopLevelContentGroupTarget(config: SiteConfig, activeBlock: Block, intentPoint: Point) {
+  const groups = getTopLevelContentGroupTargets(config, activeBlock.id);
+  const candidates = groups
+    .map((group) => {
+      const gridElement = findAdminContentGroupGridElement(group.id);
+      if (!gridElement) return null;
+
+      const rect = gridElement.getBoundingClientRect();
+      const verticalBand = Math.max(48, rect.height * 0.18);
+      const horizontalBand = 96;
+      const isNear =
+        intentPoint.y >= rect.top - verticalBand &&
+        intentPoint.y <= rect.bottom + verticalBand &&
+        intentPoint.x >= rect.left - horizontalBand &&
+        intentPoint.x <= rect.right + horizontalBand;
+      if (!isNear) return null;
+
+      return {
+        group,
+        rect,
+        distance: getDistanceToRect(intentPoint, rect)
+      };
+    })
+    .filter((item): item is { group: ContentGroupTarget; rect: DOMRect; distance: number } => item !== null)
+    .sort((a, b) => a.distance - b.distance);
+
+  const candidate = candidates[0];
+  if (!candidate) return null;
+
+  if (isSectionTextBlock(activeBlock)) {
+    const insertAfterGroup = intentPoint.y > candidate.rect.top + candidate.rect.height / 2;
+    return {
+      targetContentIndex: candidate.group.startIndex + (insertAfterGroup ? candidate.group.blocks.length : 0),
+      targetIndex: 0
+    };
+  }
+
+  const targetIndex = getInsertionIndexFromBlockRects(candidate.group.blocks, intentPoint);
+  return {
+    targetContentIndex: candidate.group.startIndex + targetIndex,
+    targetIndex
+  };
+}
+
+type ContentGroupTarget = {
+  id: string;
+  blocks: Block[];
+  startIndex: number;
+};
+
+function getTopLevelContentGroupTargets(config: SiteConfig, activeBlockId: string): ContentGroupTarget[] {
+  const renderModel = buildRenderModel(config);
+  const groups: ContentGroupTarget[] = [];
+  let flowIndex = 0;
+
+  for (const item of renderModel.orderedContentItems) {
+    if (item.type === "top-level-blocks") {
+      const blocks = item.blocks.filter((block) => block.id !== activeBlockId);
+      const startIndex = flowIndex;
+      flowIndex += blocks.length;
+      if (blocks.length > 0) {
+        groups.push({ id: item.id, blocks, startIndex });
+      }
+      continue;
+    }
+
+    if (item.block.id !== activeBlockId) {
+      flowIndex += 1;
+    }
+  }
+
+  return groups;
 }
 
 function getContentTargetIndexFromPointer(flowItems: ContentFlowItem[], pointer: Point | null) {
@@ -2305,6 +2357,12 @@ function findAdminSectionGridElement(sectionId: string, pointer?: Point | null, 
     .sort((a, b) => a.score - b.score)[0]?.element ?? null;
 }
 
+function findAdminContentGroupGridElement(contentGroupId: string) {
+  return Array.from(document.querySelectorAll<HTMLElement>("[data-admin-content-group-id]")).find(
+    (element) => element.dataset.adminContentGroupId === contentGroupId
+  ) ?? null;
+}
+
 function getAxisDistance(value: number, start: number, end: number) {
   if (value < start) return start - value;
   if (value > end) return value - end;
@@ -2397,6 +2455,7 @@ function SortableSection({
 
 function EditableSection({
   section,
+  contentGroupId,
   blocks,
   device,
   onEditSection,
@@ -2417,6 +2476,7 @@ function EditableSection({
   showDragPreview = false
 }: {
   section: Section;
+  contentGroupId?: string;
   blocks: Block[];
   device: LayoutDevice;
   onEditSection: () => void;
@@ -2529,6 +2589,7 @@ function EditableSection({
             className={cn("relative", blockGridClassByDevice[device])}
             data-device={device}
             data-admin-section-grid-id={section.id}
+            data-admin-content-group-id={contentGroupId}
             style={{ gridTemplateColumns: "repeat(12, minmax(0, 1fr))", gridAutoFlow: "dense" }}
           >
             {gridItems.map((item) =>

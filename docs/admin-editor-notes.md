@@ -57,6 +57,7 @@ This document records the current admin editor behavior and the main implementat
 - Text block hover uses a neutral gray background, not a blue drop-container tint.
 - Block dragging within a card grid updates only the dragged block's grid placement. It must not renumber unrelated siblings or move top-level siblings across text blocks.
 - Dragging between text blocks/card groups uses a drag overlay plus a temporary target placeholder.
+- Each visible card group gets its own admin-only content group id. Drag placement uses the nearest real card group, not every top-level card on the page, so a card can move from one group into another group across a text block.
 - The overlay follows the pointer while the real block remains as a faint placeholder at the original location.
 - Cross-section placement is previewed with a same-sized dashed placeholder, which pushes target-section blocks away before drop.
 - Dragging a block records its logical grid column and row in the active device mode, clamped to the valid range for that block size. This supports intentional empty spaces and diagonal placements, such as one small block at top-left and another at bottom-right.
