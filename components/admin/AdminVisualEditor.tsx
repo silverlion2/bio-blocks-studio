@@ -529,7 +529,7 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
     const now = new Date().toISOString();
     const renderModel = buildRenderModel(config);
     const originalContentIndex = getContentIndexForBlock(renderModel, blockId);
-    const flowItems = getContentFlowForBlockMove(renderModel, blockId);
+    const flowItems = getContentFlowForBlockMove(renderModel, blockId, isSectionTextBlock(activeBlock));
     const nextItems: ContentFlowItem[] = [...flowItems];
     const insertedIndex = Math.max(0, Math.min(targetContentIndex, flowItems.length));
     nextItems.splice(insertedIndex, 0, {
@@ -1176,6 +1176,10 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
 
                         if (item.type === "top-level-blocks") {
                           const contentBlocks = item.blocks.filter((block) => block.id !== activeDragBlockId);
+                          const textPreviewBlock =
+                            activeDragBlock !== null && isSectionTextBlock(activeDragBlock) ? activeDragBlock : null;
+                          const orderedContentBlocksForTextPreview =
+                            textPreviewBlock !== null ? getBlocksInMeasuredVisualOrder(contentBlocks) : contentBlocks;
                           const previewContentIndex = dragPreviewPlacement?.targetContentIndex;
                           const shouldShowGridPreview =
                             activeDragBlock !== null &&
@@ -1201,8 +1205,6 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
                             shouldReleaseSiblingPlacementsForDrag(activeDragBlock, editorDevice) &&
                             !isOriginalPreviewPosition;
 
-                          const textPreviewBlock =
-                            activeDragBlock !== null && isSectionTextBlock(activeDragBlock) ? activeDragBlock : null;
                           const textPreviewOffset =
                             textPreviewBlock !== null &&
                             !didRenderTextPreview &&
@@ -1217,7 +1219,7 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
                             pushEditableBlockGroup({
                               key: `${item.id}:before-text-preview`,
                               contentGroupId: item.id,
-                              blocks: contentBlocks.slice(0, textPreviewOffset),
+                              blocks: orderedContentBlocksForTextPreview.slice(0, textPreviewOffset),
                               dragPreview: null,
                               releaseSiblingPlacements: false
                             });
@@ -1230,7 +1232,7 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
                             pushEditableBlockGroup({
                               key: `${item.id}:after-text-preview`,
                               contentGroupId: item.id,
-                              blocks: contentBlocks.slice(textPreviewOffset),
+                              blocks: orderedContentBlocksForTextPreview.slice(textPreviewOffset),
                               dragPreview: null,
                               releaseSiblingPlacements: false
                             });
@@ -1582,15 +1584,22 @@ function moveItem<T>(items: T[], oldIndex: number, newIndex: number) {
   return next;
 }
 
-function getContentFlowForBlockMove(renderModel: ReturnType<typeof buildRenderModel>, activeBlockId: string): ContentFlowItem[] {
+function getContentFlowForBlockMove(
+  renderModel: ReturnType<typeof buildRenderModel>,
+  activeBlockId: string,
+  preferVisualBlockOrder = false
+): ContentFlowItem[] {
   const flowItems: ContentFlowItem[] = [];
 
   for (const item of renderModel.orderedContentItems) {
     if (item.type === "top-level-blocks") {
+      const blocks = item.blocks.filter((block) => block.id !== activeBlockId);
       flowItems.push(
-        ...item.blocks
-          .filter((block) => block.id !== activeBlockId)
-          .map((block) => ({ type: "top-level-block" as const, id: block.id, block }))
+        ...(preferVisualBlockOrder ? getBlocksInMeasuredVisualOrder(blocks) : blocks).map((block) => ({
+          type: "top-level-block" as const,
+          id: block.id,
+          block
+        }))
       );
       continue;
     }
@@ -1601,6 +1610,26 @@ function getContentFlowForBlockMove(renderModel: ReturnType<typeof buildRenderMo
   }
 
   return flowItems;
+}
+
+function getBlocksInMeasuredVisualOrder(blocks: Block[]) {
+  const measuredBlocks = blocks
+    .map((block, index) => {
+      const rect = getMeasuredAdminBlockRect(block.id);
+      return rect ? { block, index, rect } : null;
+    })
+    .filter((item): item is { block: Block; index: number; rect: MeasuredRect } => item !== null);
+
+  if (measuredBlocks.length !== blocks.length) return blocks;
+
+  return measuredBlocks
+    .sort((a, b) => {
+      const rowThreshold = Math.max(24, Math.min(a.rect.height, b.rect.height) * 0.45);
+      if (Math.abs(a.rect.top - b.rect.top) > rowThreshold) return a.rect.top - b.rect.top;
+      if (Math.abs(a.rect.left - b.rect.left) > 8) return a.rect.left - b.rect.left;
+      return a.index - b.index;
+    })
+    .map((item) => item.block);
 }
 
 function DragOverlayBlockPreview({ block, width, height }: { block: Block; width: number; height: number }) {
@@ -1793,7 +1822,7 @@ function getBlockDragPreviewPlacement({
 
   if (isSectionTextBlock(activeBlock)) {
     const fallbackIndex = getContentTargetIndexFromPointer(
-      getContentFlowForBlockMove(buildRenderModel(config), activeBlock.id),
+      getContentFlowForBlockMove(buildRenderModel(config), activeBlock.id, true),
       pointer ?? getDragCenterPoint(dragRect)
     );
 
@@ -1838,28 +1867,30 @@ function getTopLevelContentTargetFromDrag(
   const intentPoint = pointer ?? getDragCenterPoint(dragRect);
   if (!intentPoint) return null;
 
-  const flowItems = getContentFlowForBlockMove(buildRenderModel(config), activeBlock.id);
+  const isTextDrag = isSectionTextBlock(activeBlock);
+  const flowItems = getContentFlowForBlockMove(buildRenderModel(config), activeBlock.id, isTextDrag);
+  if (isTextDrag) {
+    const directTextTarget = getTextBlockContentTargetFromPointer(flowItems, intentPoint, true);
+    if (directTextTarget) return directTextTarget;
+  }
+
   const groupTarget = getTopLevelContentGroupTarget(config, activeBlock, intentPoint, pointer, dragRect, device);
   if (groupTarget) {
     return groupTarget;
   }
 
-  for (let index = 0; index < flowItems.length; index += 1) {
-    const item = flowItems[index];
-    if (item.type !== "text-block") continue;
-
-    const rect = getMeasuredAdminBlockRect(item.id);
-    if (!rect) continue;
-
-    const verticalIntentBand = Math.max(20, rect.height * 0.65);
-    const horizontalIntentBand = 96;
-    const isVerticallyNear = intentPoint.y >= rect.top - verticalIntentBand && intentPoint.y <= rect.bottom + verticalIntentBand;
-    const isHorizontallyNear = intentPoint.x >= rect.left - horizontalIntentBand && intentPoint.x <= rect.right + horizontalIntentBand;
-    if (!isVerticallyNear || !isHorizontallyNear) continue;
-
-    const insertAfter = intentPoint.y > rect.top + rect.height / 2;
-    return { targetContentIndex: index + (insertAfter ? 1 : 0), targetIndex: 0 };
+  const dragCenterPoint = getDragCenterPoint(dragRect);
+  if (
+    isTextDrag &&
+    dragCenterPoint &&
+    (Math.abs(dragCenterPoint.x - intentPoint.x) > 4 || Math.abs(dragCenterPoint.y - intentPoint.y) > 4)
+  ) {
+    const centerGroupTarget = getTopLevelContentGroupTarget(config, activeBlock, dragCenterPoint, pointer, dragRect, device);
+    if (centerGroupTarget) return centerGroupTarget;
   }
+
+  const textTarget = getTextBlockContentTargetFromPointer(flowItems, intentPoint, false);
+  if (textTarget) return textTarget;
 
   const gapTargetIndex = getContentGapTargetIndexFromPointer(flowItems, intentPoint);
   if (gapTargetIndex !== null) {
@@ -1877,7 +1908,7 @@ function getTopLevelContentGroupTarget(
   dragRect: MeasuredRect | null,
   device: LayoutDevice
 ) {
-  const groups = getTopLevelContentGroupTargets(config, activeBlock.id);
+  const groups = getTopLevelContentGroupTargets(config, activeBlock.id, isSectionTextBlock(activeBlock));
   const candidates = groups
     .map((group) => {
       const rect = getAdminContentGroupGridRect(group.id);
@@ -1949,7 +1980,7 @@ type ContentGroupTarget = {
   startIndex: number;
 };
 
-function getTopLevelContentGroupTargets(config: SiteConfig, activeBlockId: string): ContentGroupTarget[] {
+function getTopLevelContentGroupTargets(config: SiteConfig, activeBlockId: string, preferVisualBlockOrder = false): ContentGroupTarget[] {
   const renderModel = buildRenderModel(config);
   const groups: ContentGroupTarget[] = [];
   let flowIndex = 0;
@@ -1957,10 +1988,11 @@ function getTopLevelContentGroupTargets(config: SiteConfig, activeBlockId: strin
   for (const item of renderModel.orderedContentItems) {
     if (item.type === "top-level-blocks") {
       const blocks = item.blocks.filter((block) => block.id !== activeBlockId);
+      const orderedBlocks = preferVisualBlockOrder ? getBlocksInMeasuredVisualOrder(blocks) : blocks;
       const startIndex = flowIndex;
-      flowIndex += blocks.length;
-      if (blocks.length > 0) {
-        groups.push({ id: item.id, blocks, startIndex });
+      flowIndex += orderedBlocks.length;
+      if (orderedBlocks.length > 0) {
+        groups.push({ id: item.id, blocks: orderedBlocks, startIndex });
       }
       continue;
     }
@@ -2077,6 +2109,54 @@ function getContentGapTargetIndexFromPointer(flowItems: ContentFlowItem[], point
   }
 
   return null;
+}
+
+function getTextBlockContentTargetFromPointer(flowItems: ContentFlowItem[], pointer: Point, preferDirectHover: boolean) {
+  const candidates = flowItems
+    .map((item, index) => {
+      if (item.type !== "text-block") return null;
+
+      const rect = getMeasuredAdminBlockRect(item.id);
+      if (!rect) return null;
+
+      const horizontalBand = 96;
+      if (pointer.x < rect.left - horizontalBand || pointer.x > rect.right + horizontalBand) return null;
+
+      const centerY = rect.top + rect.height / 2;
+      const isInside = pointer.y >= rect.top && pointer.y <= rect.bottom;
+      if (isInside) {
+        return {
+          targetContentIndex: index + (pointer.y >= centerY ? 1 : 0),
+          targetIndex: 0,
+          score: Math.abs(pointer.y - centerY) * 0.01
+        };
+      }
+
+      const verticalBand = preferDirectHover ? Math.max(10, rect.height * 0.22) : Math.max(28, rect.height * 0.7);
+      if (pointer.y < rect.top && rect.top - pointer.y <= verticalBand) {
+        return {
+          targetContentIndex: index,
+          targetIndex: 0,
+          score: 100 + (rect.top - pointer.y)
+        };
+      }
+      if (pointer.y > rect.bottom && pointer.y - rect.bottom <= verticalBand) {
+        return {
+          targetContentIndex: index + 1,
+          targetIndex: 0,
+          score: 100 + (pointer.y - rect.bottom)
+        };
+      }
+
+      return null;
+    })
+    .filter(
+      (item): item is { targetContentIndex: number; targetIndex: number; score: number } => item !== null
+    )
+    .sort((a, b) => a.score - b.score);
+
+  const candidate = candidates[0];
+  return candidate ? { targetContentIndex: candidate.targetContentIndex, targetIndex: candidate.targetIndex } : null;
 }
 
 function getPlacementFromDrag({
