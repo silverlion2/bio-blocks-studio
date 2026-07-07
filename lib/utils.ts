@@ -98,6 +98,11 @@ export function getMainLocale(config: SiteConfig) {
   return config.settings.languages.mainLocale || "zh-CN";
 }
 
+export function getVariantMainLocale(config: SiteConfig, variantId: string) {
+  const variant = config.settings.variants.variants.find((item) => item.id === variantId);
+  return variant?.mainLocale || getMainLocale(config);
+}
+
 export function getEnabledLanguages(config: SiteConfig): SiteLanguage[] {
   const languages = config.settings.languages.languages.length
     ? config.settings.languages.languages
@@ -110,7 +115,7 @@ export function getAvailableLanguagesForVariant(config: SiteConfig, variantId: s
   const languages = config.settings.languages.languages.length
     ? config.settings.languages.languages
     : [{ code: getMainLocale(config), label: getMainLocale(config), isEnabled: true, sortOrder: 1 }];
-  const mainLocale = getMainLocale(config);
+  const mainLocale = getVariantMainLocale(config, variantId);
   const mainLanguage =
     languages.find((language) => language.code === mainLocale) ??
     config.settings.languages.languages.find((language) => language.code === mainLocale) ?? {
@@ -223,7 +228,7 @@ export function findVariantByAccessCode(config: SiteConfig, accessCode: string) 
 
 export function resolveLocaleFromAcceptLanguage(config: SiteConfig, acceptLanguage: string | null, variantId = getMainVariantId(config)) {
   const enabledLanguages = getAvailableLanguagesForVariant(config, variantId);
-  const mainLocale = getMainLocale(config);
+  const mainLocale = getVariantMainLocale(config, variantId);
   if (!config.settings.languages.isEnabled || enabledLanguages.length <= 1 || !acceptLanguage) return mainLocale;
 
   const languageCodes = enabledLanguages.map((language) => language.code);
@@ -305,10 +310,11 @@ function getSectionTextBlockId(sectionId: string, existingBlockIds: Set<string>)
 function getResolvedContentSnapshot(config: SiteConfig, variantId: string, locale: string): SiteContentSnapshot {
   const mainVariantId = getMainVariantId(config);
   const mainLocale = getMainLocale(config);
+  const variantMainLocale = getVariantMainLocale(config, variantId);
   const snapshots = config.contentVariants ?? {};
   const keys = [
     getContentVariantKey(variantId, locale),
-    getContentVariantKey(variantId, mainLocale),
+    getContentVariantKey(variantId, variantMainLocale),
     getContentVariantKey(mainVariantId, locale),
     getContentVariantKey(mainVariantId, mainLocale)
   ];

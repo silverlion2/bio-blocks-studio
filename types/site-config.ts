@@ -22,6 +22,7 @@ export type SiteVariant = {
   accessCode: string;
   isEnabled: boolean;
   sortOrder: number;
+  mainLocale?: string;
   languageSettings?: Record<string, { isEnabled: boolean }>;
 };
 

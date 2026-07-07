@@ -152,6 +152,7 @@ const variantSettingsSchema = z
           accessCode: z.string(),
           isEnabled: z.boolean(),
           sortOrder: z.number().int().nonnegative(),
+          mainLocale: z.string().min(1).optional(),
           languageSettings: z.record(z.object({ isEnabled: z.boolean() })).optional()
         })
       )
@@ -227,6 +228,9 @@ export const siteConfigSchema = z
         ctx.addIssue({ code: "custom", path: ["settings", "variants"], message: `Duplicate variant id: ${variant.id}` });
       }
       variantIds.add(variant.id);
+      if (variant.mainLocale && !languageCodes.has(variant.mainLocale)) {
+        ctx.addIssue({ code: "custom", path: ["settings", "variants", variant.id, "mainLocale"], message: "Variant main language must exist in languages" });
+      }
 
       if (accessCode) {
         if (!/^[a-z0-9-]+$/.test(accessCode)) {

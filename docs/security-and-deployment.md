@@ -80,7 +80,7 @@ Current editable project settings include:
 - `settings.siteUrl`: canonical public deployment origin used for metadata.
 - `settings.seoTitle`, `settings.seoDescription`, `settings.seoCanonicalUrl`, `settings.seoOgImage`: optional metadata overrides.
 - `settings.languages`: language records and the main locale.
-- `settings.variants`: public versions, main variant, hidden access codes, and per-version language visibility.
+- `settings.variants`: public versions, main variant, hidden access codes, per-version main language, and per-version language visibility.
 - `contentVariants`: optional per-version/per-locale content snapshots keyed as `variantId:locale`.
 
 Variant access codes are public routing hints, not secrets. Use them for audience-specific presentation, not for private content. Reserved paths such as `admin`, `api`, `icon`, `_next`, and `favicon.ico` are rejected by validation.
