@@ -1448,6 +1448,8 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
             <ProjectSettingsForm
               config={baseConfig}
               contentConfig={config}
+              activeVariantId={resolvedActiveVariantId}
+              activeLocale={resolvedActiveLocale}
               onChange={updateBaseConfig}
               onContentChange={update}
               onExport={exportConfig}
@@ -3822,6 +3824,8 @@ function AddBlockDialog({ onAdd }: { onAdd: (template: BlockTemplate) => void })
 function ProjectSettingsForm({
   config,
   contentConfig,
+  activeVariantId,
+  activeLocale,
   onChange,
   onContentChange,
   onExport,
@@ -3829,6 +3833,8 @@ function ProjectSettingsForm({
 }: {
   config: SiteConfig;
   contentConfig: SiteConfig;
+  activeVariantId: string;
+  activeLocale: string;
   onChange: (config: SiteConfig) => void;
   onContentChange: (config: SiteConfig) => void;
   onExport: () => void;
@@ -3839,6 +3845,8 @@ function ProjectSettingsForm({
   const contentSettings = contentConfig.settings;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activePanel, setActivePanel] = useState<ProjectSettingsPanel>("basic");
+  const activeVariant = settings.variants.variants.find((variant) => variant.id === activeVariantId);
+  const activeLanguage = getVariantLanguageList(activeVariantId).find((language) => language.code === activeLocale);
 
   function patchTheme(patch: Partial<SiteConfig["theme"]>) {
     onContentChange({ ...contentConfig, theme: { ...theme, ...patch } });
@@ -4161,6 +4169,7 @@ function ProjectSettingsForm({
 
         {activePanel === "web" ? (
           <section className="grid gap-3">
+            <ScopeBadges variantName={activeVariant?.name || activeVariantId} languageName={activeLanguage?.label || activeLocale} />
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="网页标题/site title">
                 <Input value={contentSettings.siteTitle} onChange={(event) => patchContentSettings({ siteTitle: event.target.value })} />
@@ -4185,6 +4194,7 @@ function ProjectSettingsForm({
 
         {activePanel === "seo" ? (
           <section className="grid gap-3">
+            <ScopeBadges variantName={activeVariant?.name || activeVariantId} languageName={activeLanguage?.label || activeLocale} />
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="SEO 标题/SEO title">
                 <Input value={contentSettings.seoTitle ?? ""} onChange={(event) => patchContentSettings({ seoTitle: event.target.value })} />
@@ -4468,6 +4478,16 @@ function getNextLanguageCode(existingCodes: string[]) {
     if (!existing.has(code)) return code;
   }
   return `lang-${Date.now()}`;
+}
+
+function ScopeBadges({ variantName, languageName }: { variantName: string; languageName: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#EAEAEA] bg-[#FAFAFA] px-3 py-2 text-xs text-[#64748B]">
+      <span>当前设置作用域</span>
+      <span className="rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-2.5 py-1 font-semibold text-[#1E3A5F]">{variantName}</span>
+      <span className="rounded-full border border-[#D8E9FF] bg-white px-2.5 py-1 font-semibold text-[#1E3A5F]">{languageName}</span>
+    </div>
+  );
 }
 
 function modalTitle(modal: NonNullable<ModalState>) {

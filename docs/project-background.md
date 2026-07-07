@@ -52,6 +52,8 @@ The top-bar language picker is filtered by the selected variant. The main locale
 
 In project settings, languages and variants share one `多版本&多语言` branch. The main interaction starts from version cards: add a version, then use the plus control inside that version to add languages. Adding a language to a version creates the matching `variantId:locale` snapshot and a language record only inside that version. The language capsule can be renamed, hidden with its checkbox, promoted to that version's main language after confirmation, or deleted with confirmation. The main language is stored per variant so one version's fallback language does not affect another version.
 
+The `网页与域名` and `SEO` settings panels edit the currently selected version/language content snapshot for title, description, canonical URL, and OG image fields. The panels show variant and language badges so the editor can see which public metadata module is being edited. The public site URL remains a global origin; public variant access still uses hidden short suffixes such as `/u1` rather than changing the canonical origin per version.
+
 Public routing uses hidden short access codes:
 
 - `app/[accessCode]/route.ts` checks whether the path matches an enabled variant access code such as `/u1`.

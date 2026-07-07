@@ -65,6 +65,8 @@ export function BlockCard({
   const clickable = !disableActions && block.actionType !== "none";
   const hasCover = Boolean(block.coverImage);
   const isPlainTextCard = block.metadata?.textVariant === "plain";
+  const hasHoverContent = Boolean(displayBlock.subtitle?.trim() || displayBlock.description?.trim());
+  const shouldRevealCoverContent = hasCover && hasHoverContent && !disableHoverReveal;
   const showFooter = Boolean(block.badge) || block.actionType === "link" || block.actionType === "download" || block.actionType === "image-preview";
 
   return (
@@ -96,7 +98,7 @@ export function BlockCard({
             alt=""
             className={cn(
               "absolute inset-0 h-full w-full object-cover opacity-100 transition duration-200",
-              !disableHoverReveal && "group-hover:opacity-0"
+              shouldRevealCoverContent && "group-hover:opacity-0"
             )}
           />
         ) : null}
@@ -104,7 +106,7 @@ export function BlockCard({
           <div
             className={cn(
               "pointer-events-none absolute inset-x-4 bottom-4 z-20 flex items-end justify-between gap-3 transition duration-200",
-              !disableHoverReveal && "group-hover:opacity-0"
+              shouldRevealCoverContent && "group-hover:opacity-0"
             )}
           >
             <span className="line-clamp-2 max-w-full rounded-[18px] border border-[#E5E7EB] bg-white/95 px-3 py-1.5 text-sm font-semibold leading-5 text-[#111] shadow-soft">
@@ -116,7 +118,7 @@ export function BlockCard({
           className={cn(
             "relative z-30 flex h-full flex-col gap-4 transition duration-200",
             isPlainTextCard ? "justify-center" : "justify-between",
-            hasCover && (disableHoverReveal ? "opacity-0" : "opacity-0 group-hover:opacity-100")
+            hasCover && (shouldRevealCoverContent ? "opacity-0 group-hover:opacity-100" : "opacity-0")
           )}
         >
           <div className={cn("min-h-0", isPlainTextCard && "flex flex-1")}>{renderBlock(displayBlock, hasCover)}</div>
