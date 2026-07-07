@@ -27,7 +27,14 @@ export function ContentArea({
       {contentItems.map((item) =>
         item.type === "top-level-blocks" ? (
           item.blocks.length > 0 ? (
-            <BlockGrid key={item.id} blocks={item.blocks} layout="grid" gap="md" hidePlaceholderContent />
+            <BlockGrid
+              key={item.id}
+              blocks={item.blocks}
+              layout="grid"
+              gap="md"
+              desktopContentColumns={desktopContentColumns}
+              hidePlaceholderContent
+            />
           ) : null
         ) : (
           <BlockCard

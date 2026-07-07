@@ -80,6 +80,10 @@ select {
     --block-grid-cell-span: 4;
   }
 
+  .content-grid-container[data-desktop-content-columns="2"] .block-grid {
+    --block-grid-cell-span: 6;
+  }
+
   .block-placement {
     grid-column: var(--block-desktop-column-start, auto) / var(--block-desktop-column-end, span 12);
     grid-row: var(--block-desktop-row-start, auto) / var(--block-desktop-row-end, span 1);
