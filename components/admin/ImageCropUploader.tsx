@@ -41,6 +41,7 @@ export function ImageCropUploader({
   buttonIconOnly = false,
   buttonClassName,
   previewClassName,
+  presentation = "compact",
   onUploaded,
   onClear
 }: {
@@ -52,10 +53,12 @@ export function ImageCropUploader({
   buttonIconOnly?: boolean;
   buttonClassName?: string;
   previewClassName?: string;
+  presentation?: "compact" | "coverDropzone";
   onUploaded: (url: string) => void;
   onClear?: () => void;
 }) {
   const inputId = useId();
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -66,6 +69,7 @@ export function ImageCropUploader({
   const [ratio, setRatio] = useState<CropRatio>("1:1");
   const [rotation, setRotation] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPasteTargetActive, setIsPasteTargetActive] = useState(false);
   const objectUrlRef = useRef("");
   const activeRatio = shape === "circle" ? "1:1" : ratio;
   const isCustomRatio = activeRatio === "custom";
@@ -102,6 +106,24 @@ export function ImageCropUploader({
     objectUrlRef.current = url;
     setObjectUrl(url);
   }
+
+  function openFilePicker() {
+    inputRef.current?.click();
+  }
+
+  useEffect(() => {
+    if (presentation !== "coverDropzone" || !isPasteTargetActive) return;
+
+    function chooseWindowPastedImage(event: ClipboardEvent) {
+      const pastedFile = Array.from(event.clipboardData?.files ?? []).find((item) => item.type.startsWith("image/"));
+      if (!pastedFile) return;
+      event.preventDefault();
+      chooseFile(pastedFile);
+    }
+
+    window.addEventListener("paste", chooseWindowPastedImage);
+    return () => window.removeEventListener("paste", chooseWindowPastedImage);
+  }, [isPasteTargetActive, presentation]);
 
   useEffect(() => {
     if (!objectUrl) return;
@@ -215,7 +237,49 @@ export function ImageCropUploader({
     <>
       <div className="grid gap-2">
         {label ? <p className="text-sm font-semibold">{label}</p> : null}
-        {value ? (
+        {presentation === "coverDropzone" ? (
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={openFilePicker}
+            onMouseEnter={() => setIsPasteTargetActive(true)}
+            onMouseLeave={() => setIsPasteTargetActive(false)}
+            onFocus={() => setIsPasteTargetActive(true)}
+            onBlur={() => setIsPasteTargetActive(false)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openFilePicker();
+              }
+            }}
+            className={cn(
+              "group relative grid min-h-44 cursor-pointer place-items-center overflow-hidden rounded-[28px] border border-dashed border-[#C7D2E4] bg-[#F8FAFC] text-center outline-none transition",
+              "hover:border-[#1677FF]/60 hover:bg-[#F3F8FF] focus:border-[#1677FF] focus:ring-4 focus:ring-[#1677FF]/10",
+              previewClassName
+            )}
+          >
+            {value ? (
+              <img src={value} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            ) : null}
+            <div
+              className={cn(
+                "absolute inset-3 rounded-[24px] border border-dashed border-[#BFD7F5] bg-white/88 transition",
+                value ? "opacity-0 backdrop-blur-[2px] group-hover:opacity-100 group-focus:opacity-100" : "opacity-100"
+              )}
+            />
+            <div
+              className={cn(
+                "relative z-10 grid justify-items-center gap-2 px-5 text-[#5B7896] transition",
+                value ? "opacity-0 group-hover:opacity-100 group-focus:opacity-100" : "opacity-100"
+              )}
+            >
+              <span className="grid h-12 w-12 place-items-center rounded-2xl border border-[#D8E9FF] bg-white text-[#1677FF] shadow-soft">
+                <ImageUp className="h-6 w-6" />
+              </span>
+              <span className="text-sm font-semibold text-[#1E3A5F]">点击选择，或直接在此区域粘贴图片</span>
+            </div>
+          </div>
+        ) : value ? (
           <img
             src={value}
             alt=""
@@ -228,6 +292,7 @@ export function ImageCropUploader({
         ) : null}
         <div className="flex flex-wrap items-center gap-3">
           <input
+            ref={inputRef}
             id={inputId}
             type="file"
             accept="image/jpeg,image/png,image/webp"

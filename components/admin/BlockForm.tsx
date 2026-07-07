@@ -63,8 +63,9 @@ export function BlockForm({
         <ImageCropUploader
           folder="blocks"
           value={block.coverImage}
-          label="🖼️ 封面/cover"
+          label="封面"
           buttonText="更换图片"
+          presentation="coverDropzone"
           onUploaded={(url) => onPatch({ coverImage: url })}
           onClear={() => onPatch({ coverImage: "" })}
         />
