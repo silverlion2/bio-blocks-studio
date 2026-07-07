@@ -332,6 +332,17 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
     editorDeviceRef.current = editorDevice;
   }, [editorDevice]);
 
+  useEffect(() => {
+    const confirmUnsavedChanges = (event: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", confirmUnsavedChanges);
+    return () => window.removeEventListener("beforeunload", confirmUnsavedChanges);
+  }, [isDirty]);
+
   function getCurrentDragRect(): MeasuredRect | null {
     const pointer = dragPointerRef.current;
     const offset = dragPointerOffsetRef.current;
@@ -2525,12 +2536,11 @@ function SortableTextBlock({
       {...attributes}
       {...listeners}
     >
-      <BlockCard
-        block={block}
-        disableActions
-        withLayout={false}
-        className="min-h-0 rounded-[20px] transition group-hover:bg-[#F3F4F6]"
-      />
+      <div className="rounded-[20px] p-2 transition-all duration-200 ease-out group-hover:bg-[#F3F4F6]">
+        <div className="transition-transform duration-200 ease-out group-hover:scale-[0.97]">
+          <BlockCard block={block} disableActions withLayout={false} className="min-h-0" />
+        </div>
+      </div>
       <div className={cn("pointer-events-none absolute inset-0 z-50 transition", device === "mobile" ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
         <button
           type="button"
