@@ -204,7 +204,7 @@ const editorCanvasWidth: Record<LayoutDevice, number> = {
 };
 
 const desktopBreakpoint = 768;
-const reservedVariantAccessCodes = new Set(["admin", "api", "icon", "_next", "favicon.ico"]);
+const reservedVariantAccessCodes = new Set(["admin", "api", "icon", "_next", "favicon.ico", "reset"]);
 type ResizeMetrics = {
   left: number;
   top: number;
@@ -3861,6 +3861,9 @@ function ProjectSettingsForm({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activePanel, setActivePanel] = useState<ProjectSettingsPanel>("basic");
   const [languageDraft, setLanguageDraft] = useState<{ variantId: string; code: string; label: string } | null>(null);
+  const [overrideDraft, setOverrideDraft] = useState<{ targetVariantId: string; targetLocale: string; sourceVariantId: string; sourceLocale: string } | null>(
+    null
+  );
   const activeVariant = settings.variants.variants.find((variant) => variant.id === activeVariantId);
   const activeLanguage = getVariantLanguageList(activeVariantId).find((language) => language.code === activeLocale);
 
@@ -4050,7 +4053,9 @@ function ProjectSettingsForm({
 
   function removeVariantLanguage(variantId: string, locale: string) {
     if (locale === getVariantMainLanguageCode(variantId)) return;
-    if (!window.confirm("删除这个语言版本？对应的编辑内容也会一起删除。")) return;
+    const language = getVariantLanguageList(variantId).find((item) => item.code === locale);
+    const confirmation = window.prompt(`删除「${language?.label || locale}」会连同对应编辑内容一起删除。请输入“删除”确认。`);
+    if (confirmation !== "删除") return;
     const nextContentVariants = { ...(config.contentVariants ?? {}) };
     delete nextContentVariants[getContentVariantKey(variantId, locale)];
     onChange({
@@ -4073,6 +4078,28 @@ function ProjectSettingsForm({
       },
       contentVariants: nextContentVariants
     });
+  }
+
+  function openVariantOverrideDialog(targetVariantId: string) {
+    const targetLanguages = getVariantLanguageList(targetVariantId);
+    const targetLocale = targetLanguages.some((language) => language.code === activeLocale)
+      ? activeLocale
+      : getVariantMainLanguageCode(targetVariantId);
+    const sourceVariantId = settings.variants.mainVariantId;
+    const sourceLocale = getVariantMainLanguageCode(sourceVariantId);
+    setOverrideDraft({ targetVariantId, targetLocale, sourceVariantId, sourceLocale });
+  }
+
+  function applyVariantOverride(draft: { targetVariantId: string; targetLocale: string; sourceVariantId: string; sourceLocale: string }) {
+    const targetVariant = settings.variants.variants.find((variant) => variant.id === draft.targetVariantId);
+    const targetLanguage = getVariantLanguageList(draft.targetVariantId).find((language) => language.code === draft.targetLocale);
+    const sourceVariant = settings.variants.variants.find((variant) => variant.id === draft.sourceVariantId);
+    const sourceLanguage = getVariantLanguageList(draft.sourceVariantId).find((language) => language.code === draft.sourceLocale);
+    const message = `确认用「${sourceVariant?.name || draft.sourceVariantId} / ${sourceLanguage?.label || draft.sourceLocale}」覆盖「${targetVariant?.name || draft.targetVariantId} / ${targetLanguage?.label || draft.targetLocale}」？当前内容会被直接替换。`;
+    if (!window.confirm(message)) return;
+    const sourceConfig = materializeSiteConfig(config, draft.sourceVariantId, draft.sourceLocale);
+    onChange(writeSiteContentSnapshot(config, draft.targetVariantId, draft.targetLocale, sourceConfig));
+    setOverrideDraft(null);
   }
 
   function setVariantMainLanguage(variantId: string, locale: string) {
@@ -4296,7 +4323,18 @@ function ProjectSettingsForm({
                 const accessCodeError = getVariantAccessCodeError(variant.id, variant.accessCode);
                 return (
                 <div key={variant.id} className="grid gap-3 rounded-xl border border-[#EAEAEA] p-3">
-                  <div className="grid gap-2 md:grid-cols-[1fr_0.8fr_auto]">
+                  <div className="grid gap-2 md:grid-cols-[auto_1fr_0.8fr_auto]">
+                    <div className="flex items-end">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => openVariantOverrideDialog(variant.id)}
+                        className="h-10 rounded-full border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs text-[#1E3A5F] hover:bg-[#DBEAFE]"
+                      >
+                        版本覆盖
+                      </Button>
+                    </div>
                     <div className="grid gap-1.5">
                       <Field
                         label={
@@ -4312,7 +4350,7 @@ function ProjectSettingsForm({
                       <Field label="访问后缀">
                         <Input
                           value={variant.accessCode}
-                          placeholder={variant.id === settings.variants.mainVariantId ? "主版本留空" : "u1"}
+                          placeholder={variant.id === settings.variants.mainVariantId ? "主版本留空" : variant.id}
                           onChange={(event) => updateVariant(variant.id, { accessCode: event.target.value })}
                           className={cn(accessCodeError && "border-red-300 bg-red-50/60 text-red-700 focus:border-red-400 focus:ring-red-100")}
                         />
@@ -4481,6 +4519,16 @@ function ProjectSettingsForm({
           onAdd={() => addVariantLanguage(languageDraft.variantId, languageDraft.code, languageDraft.label)}
         />
       ) : null}
+      {overrideDraft ? (
+        <VariantOverrideDialog
+          draft={overrideDraft}
+          variants={[...settings.variants.variants].sort(bySortOrder)}
+          getLanguages={getVariantLanguageList}
+          onChange={setOverrideDraft}
+          onClose={() => setOverrideDraft(null)}
+          onApply={() => applyVariantOverride(overrideDraft)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -4574,6 +4622,103 @@ function AddLanguageDialog({
           </Button>
           <Button type="button" onClick={onAdd} disabled={!canAdd}>
             添加
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VariantOverrideDialog({
+  draft,
+  variants,
+  getLanguages,
+  onChange,
+  onClose,
+  onApply
+}: {
+  draft: { targetVariantId: string; targetLocale: string; sourceVariantId: string; sourceLocale: string };
+  variants: SiteConfig["settings"]["variants"]["variants"];
+  getLanguages: (variantId: string) => SiteLanguage[];
+  onChange: (draft: { targetVariantId: string; targetLocale: string; sourceVariantId: string; sourceLocale: string }) => void;
+  onClose: () => void;
+  onApply: () => void;
+}) {
+  const targetVariant = variants.find((variant) => variant.id === draft.targetVariantId);
+  const targetLanguage = getLanguages(draft.targetVariantId).find((language) => language.code === draft.targetLocale);
+  const sourceLanguages = getLanguages(draft.sourceVariantId);
+  const sourceLocale = sourceLanguages.some((language) => language.code === draft.sourceLocale)
+    ? draft.sourceLocale
+    : sourceLanguages[0]?.code ?? draft.sourceLocale;
+
+  return (
+    <div className="fixed inset-0 z-[70] grid place-items-center bg-black/20 p-4" onMouseDown={onClose}>
+      <div
+        className="grid w-full max-w-md gap-4 rounded-2xl border border-[#EAF0F8] bg-white p-4 text-[#111] shadow-2xl"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-bold">版本覆盖</p>
+            <p className="mt-1 text-xs text-[#64748B]">选择一个来源版本和语言，覆盖到当前目标。</p>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-full text-[#64748B] hover:bg-[#F1F5F9]">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="rounded-xl border border-[#EAEAEA] bg-[#FAFAFA] px-3 py-2 text-xs text-[#64748B]">
+          覆盖目标：
+          <span className="ml-2 rounded-full border border-[#BFDBFE] bg-[#EFF6FF] px-2 py-0.5 font-semibold text-[#1E3A5F]">
+            {targetVariant?.name || draft.targetVariantId}
+          </span>
+          <span className="ml-2 rounded-full border border-[#D8E9FF] bg-white px-2 py-0.5 font-semibold text-[#1E3A5F]">
+            {targetLanguage?.label || draft.targetLocale}
+          </span>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="来源版本">
+            <Select
+              value={draft.sourceVariantId}
+              onChange={(event) => {
+                const nextVariantId = event.target.value;
+                const nextLanguages = getLanguages(nextVariantId);
+                onChange({
+                  ...draft,
+                  sourceVariantId: nextVariantId,
+                  sourceLocale: nextLanguages[0]?.code ?? draft.sourceLocale
+                });
+              }}
+            >
+              {variants.map((variant) => (
+                <option key={variant.id} value={variant.id}>
+                  {variant.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="来源语言">
+            <Select value={sourceLocale} onChange={(event) => onChange({ ...draft, sourceLocale: event.target.value })}>
+              {sourceLanguages.map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
+
+        <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs text-red-700">
+          覆盖会直接替换目标版本语言的个人信息、模块、外观、网页标题、网页描述和 SEO 设置。
+        </p>
+
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onClose}>
+            取消
+          </Button>
+          <Button type="button" onClick={onApply} className="bg-red-600 hover:bg-red-700">
+            确认覆盖
           </Button>
         </div>
       </div>

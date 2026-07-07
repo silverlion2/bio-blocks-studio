@@ -50,7 +50,9 @@ The admin editor keeps a `baseConfig` plus a materialized editing view. Switchin
 
 The top-bar language picker is filtered by the selected variant. The main locale is always available; other enabled languages appear only when they belong to that selected variant. This prevents one version's language records from leaking into another version.
 
-In project settings, languages and variants share one `多版本&多语言` branch. The main interaction starts from version cards: add a version, then use the plus control inside that version to open the add-language dialog. The dialog lets the editor choose a fixed language code from supported BCP 47-style options and set an editor-only remark name; users do not type locale codes manually. Adding a language to a version creates the matching `variantId:locale` snapshot and a language record only inside that version. The language capsule can be renamed, hidden with its checkbox, promoted to that version's main language after confirmation, or deleted with confirmation. The main language is stored per variant so one version's fallback language does not affect another version.
+In project settings, languages and variants share one `多版本&多语言` branch. The main interaction starts from version cards: add a version, then use the plus control inside that version to open the add-language dialog. The dialog lets the editor choose a fixed language code from supported BCP 47-style options and set an editor-only remark name; users do not type locale codes manually. Adding a language to a version creates the matching `variantId:locale` snapshot and a language record only inside that version. The language capsule can be renamed, hidden with its checkbox, promoted to that version's main language after confirmation, or deleted with typed confirmation. The main language is stored per variant so one version's fallback language does not affect another version.
+
+Each version card also exposes a `版本覆盖` action. It copies a full source snapshot from a selected source version and source language into the target version/language, including profile data, blocks, theme, web title/description, and SEO fields. The target is the clicked version plus the current editor language when that language exists in the target version; otherwise it falls back to that target version's main language. The overwrite requires a second confirmation because the target snapshot is replaced directly.
 
 The `网页与域名` and `SEO` settings panels edit the currently selected version/language content snapshot for title, description, canonical URL, and OG image fields. The panels show variant and language badges so the editor can see which public metadata module is being edited. The public site URL remains a global origin; public variant access still uses hidden short suffixes such as `/u1` rather than changing the canonical origin per version.
 
@@ -59,9 +61,10 @@ Public routing uses hidden short access codes:
 - `app/[accessCode]/route.ts` checks whether the path matches an enabled variant access code such as `/u1`.
 - A valid access code writes HTTP-only variant cookies and redirects to `/`, so the visible URL returns to the normal homepage.
 - `proxy.ts` decrements the variant view counter on `/`; after 10 homepage visits it clears the variant cookies.
+- `/reset` and `/?reset` clear the public variant cookies immediately and redirect to the main homepage.
 - `app/page.tsx` resolves the active variant from cookies and resolves locale from `Accept-Language`.
 
-The short access code namespace must not collide with system paths such as `admin`, `api`, `icon`, `_next`, or `favicon.ico`. `lib/validators.ts` enforces this before config save.
+The short access code namespace must not collide with system paths such as `admin`, `api`, `icon`, `_next`, `favicon.ico`, or `reset`. `lib/validators.ts` enforces this before config save.
 
 ## Main Files
 

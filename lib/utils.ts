@@ -482,7 +482,7 @@ function normalizeContentSnapshot(snapshot: SiteContentSnapshot): SiteContentSna
   };
 }
 
-const reservedAccessCodes = new Set(["admin", "api", "icon", "_next", "favicon.ico"]);
+const reservedAccessCodes = new Set(["admin", "api", "icon", "_next", "favicon.ico", "reset"]);
 
 function sectionToTextBlock(section: Section, id: string): Block {
   return {
