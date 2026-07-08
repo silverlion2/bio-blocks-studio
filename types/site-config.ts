@@ -21,6 +21,7 @@ export type SiteVariant = {
   name: string;
   accessCode: string;
   isEnabled: boolean;
+  allowSeoIndex?: boolean;
   sortOrder: number;
   mainLocale?: string;
   languages?: SiteLanguage[];

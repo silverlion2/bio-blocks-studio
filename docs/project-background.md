@@ -56,13 +56,15 @@ The editor top bar exposes a `版本覆盖` action next to the version selector.
 
 The `网页与域名` and `SEO` settings panels edit the currently selected version/language content snapshot. The web panel is the primary place for browser/page title and description and writes both the legacy site fields and the SEO metadata fields so the visible editor label matches the browser title behavior. The SEO panel is reserved for advanced fields such as canonical URL and OG image. The panels show variant and language badges so the editor can see which public metadata module is being edited. The public site URL remains a global origin; public variant access still uses hidden short suffixes such as `/u1` rather than changing the canonical origin per version.
 
+Search indexing is controlled per variant with `allowSeoIndex`. Existing configs default to index the main variant and noindex other variants; newly added variants also default to noindex. The editor can manually enable indexing for a non-main variant when it should be discoverable.
+
 Public routing uses hidden short access codes:
 
 - `app/[accessCode]/route.ts` checks whether the path matches an enabled variant access code such as `/u1`.
 - A valid access code writes HTTP-only variant cookies and redirects to `/`, so the visible URL returns to the normal homepage.
 - `proxy.ts` decrements the variant view counter on `/`; after 10 homepage visits it clears the variant cookies.
 - `/reset` and `/?reset` clear the public variant cookies immediately and redirect to the main homepage.
-- `app/page.tsx` resolves the active variant from cookies and resolves locale from `Accept-Language`.
+- `app/page.tsx` resolves the active variant from cookies, resolves locale from `Accept-Language`, and emits `robots` metadata from the active variant's `allowSeoIndex` setting.
 
 The short access code namespace must not collide with system paths such as `admin`, `api`, `icon`, `_next`, `favicon.ico`, or `reset`. `lib/validators.ts` enforces this before config save.
 

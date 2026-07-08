@@ -70,6 +70,7 @@ import {
   getEnabledVariants,
   getMainVariantId,
   getVariantLanguages,
+  getVariantAllowSeoIndex,
   getVariantMainLocale,
   getSiteContentSnapshot,
   getNextContentSortOrder,
@@ -4020,6 +4021,7 @@ function ProjectSettingsForm({
             name: "New version",
             accessCode: id,
             isEnabled: true,
+            allowSeoIndex: false,
             sortOrder: nextSortOrder,
             mainLocale,
             languages: [{ ...mainLanguage, sortOrder: 1, isEnabled: true }],
@@ -4401,6 +4403,7 @@ function ProjectSettingsForm({
               {[...settings.variants.variants].sort(bySortOrder).map((variant) => {
                 const accessCodeError = getVariantAccessCodeError(variant.id, variant.accessCode);
                 const isCollapsed = collapsedVariantIds.has(variant.id);
+                const allowSeoIndex = getVariantAllowSeoIndex(config, variant.id);
                 return (
                   <div key={variant.id} className="grid rounded-xl border border-[#EAEAEA] p-3">
                     <div className="flex items-center gap-2">
@@ -4415,7 +4418,8 @@ function ProjectSettingsForm({
                       <div className="grid min-w-0 flex-1 gap-0.5">
                         <p className="truncate text-sm font-semibold text-[#111]">{variant.name || "New version"}</p>
                         <p className="truncate text-xs text-[#64748B]">
-                          访问后缀：{variant.accessCode.trim() ? `/${variant.accessCode.trim()}` : "主版本留空"}
+                          访问后缀：{variant.accessCode.trim() ? `/${variant.accessCode.trim()}` : "主版本留空"} · SEO：
+                          {allowSeoIndex ? "允许收录" : "不收录"}
                         </p>
                       </div>
                       <Button
@@ -4456,6 +4460,13 @@ function ProjectSettingsForm({
                               {accessCodeError ? <p className="text-xs text-red-600">{accessCodeError}</p> : null}
                             </div>
                           </div>
+                          <label className="flex w-fit items-center gap-2 rounded-xl border border-[#EAEAEA] bg-[#FAFAFA] px-3 py-2 text-sm text-[#475569]">
+                            <Checkbox
+                              checked={allowSeoIndex}
+                              onChange={(event) => updateVariant(variant.id, { allowSeoIndex: event.target.checked })}
+                            />
+                            允许搜索引擎收录这个版本
+                          </label>
                           <div className="grid gap-2">
                             <div className="flex items-center justify-between gap-3">
                               <p className="text-xs font-semibold text-[#64748B]">这个版本的语言</p>

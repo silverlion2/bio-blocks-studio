@@ -274,6 +274,7 @@ export const defaultSiteConfig: SiteConfig = {
           name: "主版本",
           accessCode: "",
           isEnabled: true,
+          allowSeoIndex: true,
           sortOrder: 1,
           mainLocale: "zh-CN",
           languages: [{ code: "zh-CN", label: "中文", isEnabled: true, sortOrder: 1 }],

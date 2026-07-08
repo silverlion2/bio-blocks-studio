@@ -151,6 +151,7 @@ const variantSettingsSchema = z
           name: z.string().min(1),
           accessCode: z.string(),
           isEnabled: z.boolean(),
+          allowSeoIndex: z.boolean().optional(),
           sortOrder: z.number().int().nonnegative(),
           mainLocale: z.string().min(1).optional(),
           languages: z

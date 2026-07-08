@@ -155,6 +155,12 @@ export function getEnabledVariants(config: SiteConfig): SiteVariant[] {
   return enabled.length ? enabled : variants.slice(0, 1);
 }
 
+export function getVariantAllowSeoIndex(config: SiteConfig, variantId: string) {
+  const mainVariantId = getMainVariantId(config);
+  const variant = config.settings.variants.variants.find((item) => item.id === variantId);
+  return variant?.allowSeoIndex ?? variantId === mainVariantId;
+}
+
 export function getSiteContentSnapshot(config: SiteConfig): SiteContentSnapshot {
   return {
     profile: config.profile,
@@ -406,6 +412,7 @@ function normalizeVariantLanguageSettings(config: SiteConfig): SiteConfig["setti
     );
     return {
       ...variant,
+      allowSeoIndex: variant.allowSeoIndex ?? variant.id === settings.variants.mainVariantId,
       mainLocale,
       languages: normalizedLanguages,
       languageSettings: {
