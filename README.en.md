@@ -4,7 +4,7 @@
 
 <p>Build different versions of your personal homepage like stacking blocks.</p>
 
-<p>A self-hostable personal site template with a visual editor, draggable content blocks, hidden audience-specific versions, multilingual content, and Vercel Blob storage.</p>
+<p>Show your profile on the left, then freely arrange projects, images, videos, text, and links on the right. Supports hidden versions, multilingual content, and Vercel deployment.</p>
 
 <p>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
@@ -28,9 +28,9 @@ It is inspired by block-based personal homepage products such as Bonjour. Instea
 
 The page structure is simple:
 
-* **Left side**: Your profile, avatar, name, bio, tags, social links, contact entry, and personal information.
+* **Left side**: Your avatar, name, bio, tags, social links, contact entry, and personal information.
 * **Right side**: Draggable and resizable content blocks, including projects, images, videos, text, links, social cards, and status cards.
-* **Admin panel**: Edit content, adjust layout, upload images, switch themes, manage languages, and create hidden versions.
+* **Admin panel**: Edit content, adjust layout, upload images, switch themes, manage languages, and create hidden versions after logging in with a password.
 * **Storage**: No traditional database required. Production content is stored in Vercel Blob.
 
 > This project is not an official Bonjour project and is not affiliated with Bonjour. It is an open-source, self-hostable implementation inspired by modular personal homepage experiences.
@@ -251,53 +251,123 @@ GitHub is suitable for hosting the source code. Vercel is suitable for running t
 
 ---
 
-### 🤖 Option 1: Deploy with an AI agent
+### 🤖 Option 1: Deploy with an AI Agent
 
-If you use Codex, Claude Code, Cursor, or another coding agent, you can copy the prompt below and ask the agent to guide you through deployment.
+If you use Codex, Claude Code, Cursor, or another coding agent, and it has access to Vercel MCP or Vercel CLI tools, you can give it the prompt below to deploy this project for you.
+
+Copy the full prompt below and send it to your AI Agent:
 
 ```text
-Please help me deploy this project:
+Please deploy this open-source project directly to my Vercel account and complete a post-deployment usability check.
 
-GitHub repository:
+Project repository:
 https://github.com/JiahaoTang-Alvin/personal-site-studio
 
-Goal:
-Deploy an editable modular personal homepage to Vercel.
-
 My admin login password:
+[Replace this with the admin password you want to use]
+
+Project notes:
+This is a Next.js App Router project and requires the Vercel runtime.
+The public page is a personal homepage.
+The admin paths are /admin/login and /admin.
+Production uses Vercel Blob to store site config and uploaded images.
+The public page only reads content. Config saving and image uploads are only available after admin login.
 
 Please follow these steps:
 
-1. Use the GitHub repository above to create and deploy a new project on Vercel.
-   This is a Next.js App Router application and requires the Vercel runtime.
-   Do not convert it into a GitHub Pages static export.
+1. Import the public repository directly into Vercel
+   - Open Vercel Add New Project / Import Project.
+   - Import directly from this public repository URL:
+     https://github.com/JiahaoTang-Alvin/personal-site-studio
+   - If Vercel supports importing by Git URL, use the Git URL directly.
+   - If Vercel requires me to log in, authorize GitHub, authorize Vercel, or confirm the import, clearly tell me where I need to click.
 
-2. If Vercel or GitHub requires authorization, repository import, template copying, or project creation, guide me through the required manual steps.
+   Important:
+   - Do not fork the repository.
+   - Do not copy the repository to my GitHub.
+   - Do not create a new GitHub repository.
+   - Do not convert the project to GitHub Pages.
+   - Do not convert it to static HTML.
+   - Do not use next export.
 
-3. Set the following environment variables for the Vercel project:
+2. Use default Vercel project settings
+   - Framework Preset should be Next.js.
+   - Root Directory should remain ./.
+   - Keep Install Command, Build Command, and Output Directory as Vercel detects them by default.
+   - Do not change build settings unless the build logs clearly require it.
 
-   NEXT_PUBLIC_SITE_URL=https://my-domain-or-vercel-domain
-   ADMIN_PASSWORD=the-admin-password-I-provided-above
+3. Set Vercel environment variables
+   In the Vercel Project Production environment, set:
 
-4. Create a Vercel Blob Store and connect it to this Vercel project.
-   The Blob Store should use Public access because the homepage config and uploaded images need to be readable by the public page.
+   NEXT_PUBLIC_SITE_URL=the final production URL
+   ADMIN_PASSWORD=the admin login password I provided above
 
-5. Make sure the project has the Blob read-write token environment variable:
+   Important:
+   - ADMIN_PASSWORD must be set to the password I wrote in this prompt.
+   - ADMIN_PASSWORD is the login password for /admin/login.
+   - Do not write ADMIN_PASSWORD into README files, frontend code, Git commits, or public logs.
+   - If the final domain is not known before deployment, use the Vercel-generated domain for NEXT_PUBLIC_SITE_URL first.
+   - If I later bind a custom domain, update NEXT_PUBLIC_SITE_URL and redeploy Production.
 
-   BLOB_READ_WRITE_TOKEN
+4. Configure Vercel Blob
+   This project needs Vercel Blob to store:
+   - Site config at config/site-config.json
+   - Uploaded avatars, image blocks, project images, QR codes, and other images
 
-   Do not create only BLOB_STORE_ID or BLOB_WEBHOOK_PUBLIC_KEY.
-   Saving config and uploading images require the read-write token.
+   Please create a Blob Store in the Vercel project Storage area.
 
-6. Deploy or redeploy Production so the new environment variables take effect.
+   Requirements:
+   - Blob Store should use Public access, because the public homepage needs to read config and images.
+   - Blob Store must be connected to the current Vercel Project.
+   - When Vercel creates and connects a Blob Store, it usually adds related environment variables automatically.
+   - Please specifically confirm that the current Vercel Project Production environment contains:
 
-7. After deployment, open:
+     BLOB_READ_WRITE_TOKEN
 
-   https://your-domain/admin/login
+   - Do not stop after seeing only BLOB_STORE_ID or BLOB_WEBHOOK_PUBLIC_KEY.
+   - Saving config and uploading images require the read-write token, which is BLOB_READ_WRITE_TOKEN.
+   - If BLOB_READ_WRITE_TOKEN already exists automatically, just confirm it.
+   - If it does not exist, add the read-write token to the current project environment variables from the Blob Store Project Connection / Settings area.
 
-   Log in with ADMIN_PASSWORD.
+5. Do not set extra variables unless I explicitly ask
+   - Do not proactively set SESSION_SECRET.
+   - When SESSION_SECRET is empty, this project derives the session signing secret from the admin login credentials, which is suitable for normal no-code deployment.
+   - If you truly need to set SESSION_SECRET, use a random string with at least 32 characters and do not reveal it to the user.
 
-Before executing, tell me which steps require my manual authorization, such as GitHub login, Vercel login, creating Blob, connecting the project, or production deployment.
+6. Deploy or redeploy Production
+   - After environment variables and Blob are configured, trigger a Production deployment or Redeploy.
+   - Wait until the deployment is complete and the status is Ready.
+
+7. Post-deployment checks
+   Please check the following:
+
+   - The public page is accessible.
+   - /admin/login opens correctly.
+   - I can log in with the ADMIN_PASSWORD provided above.
+   - /admin can be accessed after login.
+   - Project Settings can be opened in the admin panel.
+   - Saving once does not fail due to missing BLOB_READ_WRITE_TOKEN.
+   - After saving, the site config should be written into Vercel Blob.
+   - If image upload can be tested, test one image upload.
+   - If image upload cannot be tested, at least confirm that /api/admin/upload does not have an obvious missing environment variable issue.
+
+8. Security reminders
+   - Config and uploaded images in Vercel Blob are publicly readable.
+   - Do not put secrets, identity documents, private notes, unreleased credentials, or sensitive personal data into the site config.
+   - Hidden versions are only for audience-specific presentation, not strict access control.
+   - Hidden access suffixes should not be treated as passwords.
+
+9. If something goes wrong
+   - If the problem is Vercel or GitHub authorization, tell me exactly where I need to click.
+   - If Vercel cannot import the public GitHub URL directly, tell me the specific reason and give an alternative.
+   - If the problem is environment variables, list which variable is missing. Do not show existing variable values.
+   - If the problem is Blob, first check whether BLOB_READ_WRITE_TOKEN exists in the current Vercel Project Production environment.
+   - If the build fails, read the build logs and identify the exact file, cause, and suggested fix.
+   - Do not only say “deployment failed.” Give the next executable step.
+
+At the end, return:
+1. Production URL
+2. Admin login URL
 ```
 
 > Do not put your admin password in a public repository, README, Issue, public chat, or frontend code. To change the password later, update `ADMIN_PASSWORD` in Vercel environment variables and redeploy Production.
