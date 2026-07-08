@@ -87,17 +87,20 @@ http://localhost:3000
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 BLOB_READ_WRITE_TOKEN=
-ADMIN_PASSWORD_HASH=
-SESSION_SECRET=
+ADMIN_PASSWORD=
 ```
 
-生产环境必需：
+最简单的生产环境配置：
 
 - `BLOB_READ_WRITE_TOKEN`：Vercel Blob read/write token，用于保存配置和上传图片。
-- `ADMIN_PASSWORD_HASH`：后台密码的 bcrypt hash。
-- `SESSION_SECRET`：用于签名后台登录 session 的随机密钥，至少 32 个字符。
+- `ADMIN_PASSWORD`：后台登录密码。适合完全不会代码的用户，直接在 Vercel 的 Environment Variables 里填写；Value 填你想设置的密码即可。
 
-生成后台密码 hash：
+可选增强项：
+
+- `ADMIN_PASSWORD_HASH`：后台密码的 bcrypt hash。如果设置了它，系统会优先使用 hash，并忽略 `ADMIN_PASSWORD`。
+- `SESSION_SECRET`：用于签名后台登录 session 的随机密钥。可以不填；不填时系统会从后台密码自动派生一个签名密钥。如果你想手动设置，至少 32 个字符。
+
+如果你不想在 Vercel 保存明文密码，可以生成后台密码 hash：
 
 ```bash
 node -e "const bcrypt=require('bcryptjs'); bcrypt.hash(process.argv[1], 12).then(console.log)" "your-password"
@@ -105,13 +108,13 @@ node -e "const bcrypt=require('bcryptjs'); bcrypt.hash(process.argv[1], 12).then
 
 把输出结果填入 `ADMIN_PASSWORD_HASH`。登录后台时输入的是原始明文密码，也就是上面命令里的 `your-password`，不是生成出来的 hash。
 
-生成 session secret：
+如果你想手动生成 session secret：
 
 ```bash
 openssl rand -base64 48
 ```
 
-不要把 `BLOB_READ_WRITE_TOKEN`、`ADMIN_PASSWORD_HASH` 或 `SESSION_SECRET` 加上 `NEXT_PUBLIC_` 前缀。它们必须只存在服务端。只有 `NEXT_PUBLIC_SITE_URL` 可以暴露给浏览器。
+不要把 `BLOB_READ_WRITE_TOKEN`、`ADMIN_PASSWORD`、`ADMIN_PASSWORD_HASH` 或 `SESSION_SECRET` 加上 `NEXT_PUBLIC_` 前缀。它们必须只存在服务端。只有 `NEXT_PUBLIC_SITE_URL` 可以暴露给浏览器。
 
 ## 三种部署方式
 
@@ -130,54 +133,47 @@ GitHub 仓库：https://github.com/JiahaoTang-Alvin/personal-site-studio
 2. 检查项目是 Next.js App Router 应用，确认需要 Vercel 运行时，不要改成 GitHub Pages 静态导出。
 3. 帮我准备 Vercel 项目，并启用 Vercel Blob。
 4. 让我提供一个后台登录密码。不要把明文密码写进代码或 README。
-5. 用下面命令生成后台密码 hash，并把输出设置为 Vercel 环境变量 ADMIN_PASSWORD_HASH：
-   node -e "const bcrypt=require('bcryptjs'); bcrypt.hash(process.argv[1], 12).then(console.log)" "我提供的后台密码"
-6. 用下面命令生成 SESSION_SECRET，并设置为 Vercel 环境变量：
-   openssl rand -base64 48
-7. 设置这些 Vercel 环境变量：
+5. 默认使用零代码部署：把我提供的后台密码设置为 Vercel 环境变量 ADMIN_PASSWORD。这样我以后登录 /admin/login 时输入的就是我自己设置的密码。
+6. 如果我要更保险的部署方式，可以帮我把这个密码转换成 bcrypt hash，设置为 ADMIN_PASSWORD_HASH。注意：即使使用 hash，我登录时仍然输入原始密码，不需要记住 hash。
+7. SESSION_SECRET 不是后台登录密码。它只是 session 签名密钥；可以不填，系统会自动从后台密码派生。如果你要手动设置，请生成一串至少 32 个字符的随机值。
+8. 至少设置这些 Vercel 环境变量。其中登录相关只需要 ADMIN_PASSWORD：
    NEXT_PUBLIC_SITE_URL=https://我的域名或 Vercel 域名
    BLOB_READ_WRITE_TOKEN=Vercel Blob 的 read/write token
-   ADMIN_PASSWORD_HASH=上面生成的 bcrypt hash
-   SESSION_SECRET=上面生成的随机 secret
-8. 部署到 Vercel。
-9. 部署完成后，打开 /admin/login，确认我可以用原始明文密码登录。注意：登录时输入原始密码，不是 ADMIN_PASSWORD_HASH。
-10. 登录后打开「项目设置」，填写站点标题、描述、站点 URL、SEO、版本和语言，然后保存一次，把生产配置写入 Vercel Blob。
+   ADMIN_PASSWORD=我提供的后台密码
+9. 部署到 Vercel。
+10. 部署完成后，打开 /admin/login，确认我可以用原始密码登录。
+11. 登录后打开「项目设置」，填写站点标题、描述、站点 URL、SEO、版本和语言，然后保存一次，把生产配置写入 Vercel Blob。
 
 请在执行前告诉我哪些步骤需要我手动授权，例如 GitHub、Vercel 登录或创建 Blob。
 ```
 
-这条路径适合不想手动处理 GitHub、Vercel 和环境变量细节的用户。你仍然需要自己保管后台明文密码；项目只保存 bcrypt hash。
+这条路径适合不想手动处理 GitHub、Vercel 和环境变量细节的用户。你仍然需要自己保管后台密码；不要把它写进公开仓库、README 或公开聊天记录。以后想换密码，去 Vercel 后台更新 `ADMIN_PASSWORD`，然后重新部署生产环境即可。
 
-### 方式二：原始 Vercel 部署
+### 方式二：从 GitHub 直接导入 Vercel
 
 1. Fork 或复制这个仓库到你的 GitHub 账号。
-2. 在 Vercel 新建项目，选择该 GitHub 仓库。
-3. 在 Vercel 项目里启用 Vercel Blob。
-4. 创建后台密码 hash：
-
-   ```bash
-   node -e "const bcrypt=require('bcryptjs'); bcrypt.hash(process.argv[1], 12).then(console.log)" "your-password"
-   ```
-
-5. 创建 session secret：
-
-   ```bash
-   openssl rand -base64 48
-   ```
-
-6. 在 Vercel Project Settings -> Environment Variables 添加：
+2. 打开 Vercel，选择 **Add New... -> Project**，导入这个 GitHub 仓库。
+3. 在 New Project 页面保持默认设置：
+   - Framework Preset：`Next.js`
+   - Root Directory：`./`
+4. 展开 **Environment Variables**，在截图里的 Key / Value 区域逐条添加：
 
    ```env
    NEXT_PUBLIC_SITE_URL=https://your-domain.com
    BLOB_READ_WRITE_TOKEN=your-vercel-blob-read-write-token
-   ADMIN_PASSWORD_HASH=the-bcrypt-hash-output
-   SESSION_SECRET=the-random-secret-output
+   ADMIN_PASSWORD=your-admin-login-password
    ```
 
-7. 部署项目。
-8. 打开 `https://your-domain.com/admin/login`，使用 `your-password` 登录。不要输入 hash。
+   后台登录相关只需要 `ADMIN_PASSWORD`。Value 可以填你想用的任意强密码，例如一段自己能记住、别人猜不到的短语。
+
+5. `Environments` 可以选择 `Production and Preview`，也可以只选 `Production`。
+6. 点击 **Deploy**。
+7. 部署完成后，在 Vercel 项目里启用 Vercel Blob，并把 Blob read/write token 填回 `BLOB_READ_WRITE_TOKEN`。如果你是在部署前已经创建好 Blob token，也可以直接填。如果是部署后才补充或修改环境变量，需要重新部署一次生产环境。
+8. 打开 `https://your-domain.com/admin/login`，使用 `ADMIN_PASSWORD` 里的原始密码登录。
 9. 在后台打开「项目设置」，设置项目名称、公开标题、描述、站点 URL、SEO、版本和语言。
 10. 点击保存一次，把生产配置写入 Vercel Blob。
+
+如果后续要改后台密码，到 Vercel 项目的 **Settings -> Environment Variables** 更新 `ADMIN_PASSWORD`，然后重新部署一次生产环境。`SESSION_SECRET` 不是登录密码；只有在你想让所有旧登录立刻失效时，才需要同时更新它。
 
 ### 方式三：手动发布到 GitHub，再连接 Vercel
 

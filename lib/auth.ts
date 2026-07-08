@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
 
 export const SESSION_COOKIE_NAME = "bio_template_admin_session";
@@ -7,7 +7,12 @@ const MIN_SECRET_LENGTH = 32;
 
 function getSecret() {
   const secret = process.env.SESSION_SECRET || "";
-  return secret.length >= MIN_SECRET_LENGTH ? secret : "";
+  if (secret.length >= MIN_SECRET_LENGTH) {
+    return secret;
+  }
+
+  const credentialSecret = process.env.ADMIN_PASSWORD_HASH || process.env.ADMIN_PASSWORD || "";
+  return credentialSecret ? createHash("sha256").update(`admin-session:${credentialSecret}`).digest("hex") : "";
 }
 
 function base64url(input: Buffer | string) {

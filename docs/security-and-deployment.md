@@ -11,13 +11,14 @@ The public page is read-only. All writes happen through authenticated admin rout
 
 Admin authentication uses:
 
+- `ADMIN_PASSWORD`: plain admin password for no-code Vercel setup.
 - `ADMIN_PASSWORD_HASH`: bcrypt hash of the admin password.
-- `SESSION_SECRET`: HMAC signing secret for the session cookie.
+- `SESSION_SECRET`: optional HMAC signing secret for the session cookie.
 - `bio_template_admin_session`: HTTP-only session cookie.
 - `bio_variant_id`: HTTP-only public variant selection cookie.
 - `bio_variant_remaining`: HTTP-only public variant view counter cookie.
 
-`SESSION_SECRET` must be at least 32 characters. Short or missing secrets make session verification fail.
+`ADMIN_PASSWORD_HASH` takes priority over `ADMIN_PASSWORD`. `SESSION_SECRET` should be at least 32 characters when set manually. If it is empty, the app derives the session signing secret from the admin credential, which keeps the no-code Vercel import flow simple. Changing `SESSION_SECRET` invalidates existing admin sessions immediately.
 
 The public variant cookies do not grant permissions. They only select which enabled public version should render on `/`, and they expire by counter after 10 homepage visits.
 
@@ -26,6 +27,7 @@ The public variant cookies do not grant permissions. They only select which enab
 These variables must stay server-only:
 
 - `BLOB_READ_WRITE_TOKEN`
+- `ADMIN_PASSWORD`
 - `ADMIN_PASSWORD_HASH`
 - `SESSION_SECRET`
 
@@ -108,8 +110,8 @@ The app can run without Vercel Blob:
 2. Enable Vercel Blob.
 3. Set `NEXT_PUBLIC_SITE_URL` to the production origin.
 4. Set `BLOB_READ_WRITE_TOKEN`.
-5. Set `ADMIN_PASSWORD_HASH`.
-6. Set a random `SESSION_SECRET` of at least 32 characters.
+5. Set `ADMIN_PASSWORD` for the simplest setup, or set `ADMIN_PASSWORD_HASH` for the stronger setup.
+6. Optionally set a random `SESSION_SECRET` of at least 32 characters.
 7. Sign in at `/admin/login`, open **项目设置**, and confirm project name, public title, description, URL, SEO fields, versions, and languages inside each version.
 8. Save once so the production Blob config is initialized.
 9. Run a production build before publishing major changes.

@@ -87,17 +87,20 @@ Create `.env.local` from `.env.example`:
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 BLOB_READ_WRITE_TOKEN=
-ADMIN_PASSWORD_HASH=
-SESSION_SECRET=
+ADMIN_PASSWORD=
 ```
 
-Required in production:
+Simplest production setup:
 
 - `BLOB_READ_WRITE_TOKEN`: Vercel Blob read/write token for saving config and uploaded images.
-- `ADMIN_PASSWORD_HASH`: bcrypt hash for the admin password.
-- `SESSION_SECRET`: random session-signing secret with at least 32 characters.
+- `ADMIN_PASSWORD`: admin login password. This is the easiest option for no-code users because it can be typed directly into Vercel Environment Variables; the Value can be the password you want to use.
 
-Generate the admin password hash:
+Optional stronger setup:
+
+- `ADMIN_PASSWORD_HASH`: bcrypt hash for the admin password. If set, it takes priority over `ADMIN_PASSWORD`.
+- `SESSION_SECRET`: random session-signing secret. It can be left empty; when it is empty, the app derives a signing secret from the admin credential. If you set it manually, use at least 32 characters.
+
+If you do not want to store a plain password in Vercel, generate the admin password hash:
 
 ```bash
 node -e "const bcrypt=require('bcryptjs'); bcrypt.hash(process.argv[1], 12).then(console.log)" "your-password"
@@ -105,13 +108,13 @@ node -e "const bcrypt=require('bcryptjs'); bcrypt.hash(process.argv[1], 12).then
 
 Put the command output into `ADMIN_PASSWORD_HASH`. When logging in to the admin page, use the original plain password, meaning `your-password` from the command above, not the generated hash.
 
-Generate a session secret:
+If you want to generate a session secret manually:
 
 ```bash
 openssl rand -base64 48
 ```
 
-Never expose `BLOB_READ_WRITE_TOKEN`, `ADMIN_PASSWORD_HASH`, or `SESSION_SECRET` with a `NEXT_PUBLIC_` prefix. They must stay server-only. Only `NEXT_PUBLIC_SITE_URL` is safe to expose to the browser.
+Never expose `BLOB_READ_WRITE_TOKEN`, `ADMIN_PASSWORD`, `ADMIN_PASSWORD_HASH`, or `SESSION_SECRET` with a `NEXT_PUBLIC_` prefix. They must stay server-only. Only `NEXT_PUBLIC_SITE_URL` is safe to expose to the browser.
 
 ## Three Deployment Options
 
@@ -130,54 +133,47 @@ Please do the following:
 2. Confirm this is a Next.js App Router app that needs the Vercel runtime. Do not convert it to a GitHub Pages static export.
 3. Prepare a Vercel project and enable Vercel Blob.
 4. Ask me for an admin login password. Do not write the plain password into code or README files.
-5. Generate the admin password hash with this command, then set the output as the Vercel environment variable ADMIN_PASSWORD_HASH:
-   node -e "const bcrypt=require('bcryptjs'); bcrypt.hash(process.argv[1], 12).then(console.log)" "the-admin-password-I-provide"
-6. Generate SESSION_SECRET with this command and set it as a Vercel environment variable:
-   openssl rand -base64 48
-7. Set these Vercel environment variables:
+5. Use the no-code setup by default: set my chosen admin password as the Vercel environment variable ADMIN_PASSWORD. When I sign in at /admin/login later, I should enter the password I chose.
+6. For the safer server-side setup, you may convert that password into a bcrypt hash and set it as ADMIN_PASSWORD_HASH. Important: even when using the hash, I still sign in with the original password. I do not need to remember the hash.
+7. SESSION_SECRET is not the admin login password. It is only the session signing key. It can be left empty because the app derives one from the admin credential. If you set it manually, generate random text with at least 32 characters.
+8. Set at least these Vercel environment variables. The only login-related variable is ADMIN_PASSWORD:
    NEXT_PUBLIC_SITE_URL=https://my-domain-or-vercel-domain
    BLOB_READ_WRITE_TOKEN=the Vercel Blob read/write token
-   ADMIN_PASSWORD_HASH=the bcrypt hash generated above
-   SESSION_SECRET=the random secret generated above
-8. Deploy to Vercel.
-9. After deployment, open /admin/login and confirm I can log in with the original plain password. Important: the login password is the original password, not ADMIN_PASSWORD_HASH.
-10. After login, open Project Settings, fill in the site title, description, URL, SEO fields, versions, and languages, then save once to write the production config to Vercel Blob.
+   ADMIN_PASSWORD=the admin password I provide
+9. Deploy to Vercel.
+10. After deployment, open /admin/login and confirm I can log in with the original password.
+11. After login, open Project Settings, fill in the site title, description, URL, SEO fields, versions, and languages, then save once to write the production config to Vercel Blob.
 
 Before making changes, tell me which steps need my manual authorization, such as GitHub, Vercel login, or Blob creation.
 ```
 
-This path is useful if you do not want to manually wire GitHub, Vercel, and environment variables. You still own the original admin password; the project stores only the bcrypt hash.
+This path is useful if you do not want to manually wire GitHub, Vercel, and environment variables. You still own the admin password; do not write it into a public repository, README, or public chat transcript. To change the password later, update `ADMIN_PASSWORD` in Vercel and redeploy production.
 
-### Option 2: Deploy Directly To Vercel
+### Option 2: Import From GitHub Directly Into Vercel
 
 1. Fork or copy this repository into your GitHub account.
-2. Create a new Vercel project and choose that GitHub repository.
-3. Enable Vercel Blob for the project.
-4. Generate the admin password hash:
-
-   ```bash
-   node -e "const bcrypt=require('bcryptjs'); bcrypt.hash(process.argv[1], 12).then(console.log)" "your-password"
-   ```
-
-5. Generate the session secret:
-
-   ```bash
-   openssl rand -base64 48
-   ```
-
-6. In Vercel Project Settings -> Environment Variables, add:
+2. In Vercel, choose **Add New... -> Project** and import the GitHub repository.
+3. On the New Project page, keep the default settings:
+   - Framework Preset: `Next.js`
+   - Root Directory: `./`
+4. Expand **Environment Variables** and add these rows in the Key / Value fields:
 
    ```env
    NEXT_PUBLIC_SITE_URL=https://your-domain.com
    BLOB_READ_WRITE_TOKEN=your-vercel-blob-read-write-token
-   ADMIN_PASSWORD_HASH=the-bcrypt-hash-output
-   SESSION_SECRET=the-random-secret-output
+   ADMIN_PASSWORD=your-admin-login-password
    ```
 
-7. Deploy the project.
-8. Open `https://your-domain.com/admin/login` and log in with `your-password`. Do not enter the hash.
+   The only login-related variable is `ADMIN_PASSWORD`. Its Value can be any strong password you want to use, ideally a phrase you can remember and other people cannot guess.
+
+5. For `Environments`, choose `Production and Preview`, or choose only `Production`.
+6. Click **Deploy**.
+7. After deployment, enable Vercel Blob in the Vercel project and set the Blob read/write token as `BLOB_READ_WRITE_TOKEN`. If you already created the Blob token before deploying, you can enter it in step 4. If you add or change environment variables after deployment, redeploy production once.
+8. Open `https://your-domain.com/admin/login` and log in with the original password from `ADMIN_PASSWORD`.
 9. In the admin editor, open Project Settings and set the project name, public title, description, URL, SEO fields, versions, and languages.
 10. Save once to persist the production config to Vercel Blob.
+
+To change the admin password later, update `ADMIN_PASSWORD` in **Settings -> Environment Variables** and redeploy production. `SESSION_SECRET` is not the login password; update it only when you want every old login session to expire immediately.
 
 ### Option 3: Publish To GitHub Manually, Then Connect Vercel
 
