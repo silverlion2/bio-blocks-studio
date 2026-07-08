@@ -1126,13 +1126,13 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
   return (
     <main className="min-h-screen bg-white text-[#101010]">
       <header className="sticky top-0 z-40 border-b border-[#EAF0F8] bg-white">
-        <div className="mx-auto grid max-w-[1180px] gap-2 px-5 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
+        <div className="mx-auto grid max-w-[1180px] gap-2 px-5 py-3 md:flex md:items-center md:justify-between">
+          <div className="flex items-center justify-between gap-3 md:contents">
+            <div className="md:order-1">
               <p className="text-sm font-semibold">{baseConfig.settings.projectName}</p>
               <p className="text-xs text-[#6B7280]">{isDirty ? "有未保存修改" : "已保存"}</p>
             </div>
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-end gap-2 md:order-3">
               <Button variant="secondary" size="sm" onClick={() => setModal({ type: "project-settings" })}>
                 <Settings className="h-4 w-4" />
                 项目设置
@@ -1143,7 +1143,7 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
               </Button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 md:order-2 md:ml-auto md:justify-end">
             {shouldShowVariantPicker ? (
               <>
                 <Button
