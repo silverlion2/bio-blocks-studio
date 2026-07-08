@@ -261,7 +261,7 @@ Copy the full prompt below and send it to your AI Agent:
 Please deploy this open-source project directly to my Vercel account and complete a post-deployment usability check.
 
 Project repository:
-https://github.com/JiahaoTang-Alvin/personal-site-studio
+https://github.com/JiahaoTang-Alvin/bio-blocks-studio
 
 My admin login password:
 [Replace this with the admin password you want to use]
@@ -278,7 +278,7 @@ Please follow these steps:
 1. Import the public repository directly into Vercel
    - Open Vercel Add New Project / Import Project.
    - Import directly from this public repository URL:
-     https://github.com/JiahaoTang-Alvin/personal-site-studio
+     https://github.com/JiahaoTang-Alvin/bio-blocks-studio
    - If Vercel supports importing by Git URL, use the Git URL directly.
    - If Vercel requires me to log in, authorize GitHub, authorize Vercel, or confirm the import, clearly tell me where I need to click.
 
@@ -396,7 +396,7 @@ Add New... -> Project
 Enter the repository URL:
 
 ```text
-https://github.com/JiahaoTang-Alvin/personal-site-studio
+https://github.com/JiahaoTang-Alvin/bio-blocks-studio
 ```
 
 <img width="720" alt="Import GitHub repository" src="https://github.com/user-attachments/assets/bbdabceb-1b23-46c0-8609-033ed04c7d04" />
