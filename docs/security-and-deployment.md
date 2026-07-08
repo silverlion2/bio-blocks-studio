@@ -75,21 +75,21 @@ The admin editor can export and import this config as JSON from **项目设置**
 Current editable project settings include:
 
 - `settings.projectName`: admin top bar and login page name.
-- `settings.siteTitle`: public browser/metadata title.
-- `settings.siteDescription`: public metadata description.
+- `settings.siteTitle` and `settings.seoTitle`: public browser/metadata title. The admin web-title field writes both so older configs stay compatible while the UI has one title entry point.
+- `settings.siteDescription` and `settings.seoDescription`: public metadata description. The admin web-description field writes both for the same reason.
 - `settings.siteUrl`: canonical public deployment origin used for metadata.
-- `settings.seoTitle`, `settings.seoDescription`, `settings.seoCanonicalUrl`, `settings.seoOgImage`: optional metadata overrides.
+- `settings.seoCanonicalUrl`, `settings.seoOgImage`: advanced SEO metadata fields.
 - `settings.languages`: legacy compatibility mirror of the main variant's language records and main locale.
 - `settings.variants`: public versions, main variant, hidden access codes, per-version language records, per-version main language, and per-version language visibility.
 - `contentVariants`: optional per-version/per-locale content snapshots keyed as `variantId:locale`.
 
-Variant access codes are public routing hints, not secrets. Use them for audience-specific presentation, not for private content. Reserved paths such as `admin`, `api`, `icon`, `_next`, and `favicon.ico` are rejected by validation.
+Variant access codes are public routing hints, not secrets. Use them for audience-specific presentation, not for private content. Reserved paths such as `admin`, `api`, `icon`, `_next`, `favicon.ico`, and `reset` are rejected by validation.
 
 The project settings modal is split into these admin sections:
 
 - Basic/editor identity.
 - Web/domain metadata.
-- SEO metadata overrides.
+- SEO advanced metadata.
 - Combined multilingual and multi-version settings, where each version controls its own language snapshots.
 - Appearance controls.
 - Config import/export.

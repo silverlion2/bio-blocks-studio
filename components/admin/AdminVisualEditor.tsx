@@ -279,6 +279,9 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
   const [activeVariantId, setActiveVariantId] = useState(() => getMainVariantId(initialConfig));
   const [activeLocale, setActiveLocale] = useState(() => getVariantMainLocale(initialConfig, getMainVariantId(initialConfig)));
   const [modal, setModal] = useState<ModalState>(null);
+  const [overrideDraft, setOverrideDraft] = useState<{ targetVariantId: string; targetLocale: string; sourceVariantId: string; sourceLocale: string } | null>(
+    null
+  );
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -476,6 +479,32 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
   function updateBaseConfig(next: SiteConfig) {
     setBaseConfig(normalizeContentFlowConfig(next));
     setIsDirty(true);
+  }
+
+  function getTopBarVariantLanguages(variantId: string) {
+    return getVariantLanguages(baseConfig, variantId);
+  }
+
+  function openTopBarOverrideDialog() {
+    const sourceVariantId = getMainVariantId(baseConfig);
+    setOverrideDraft({
+      targetVariantId: resolvedActiveVariantId,
+      targetLocale: resolvedActiveLocale,
+      sourceVariantId,
+      sourceLocale: getVariantMainLocale(baseConfig, sourceVariantId)
+    });
+  }
+
+  function applyTopBarVariantOverride(draft: { targetVariantId: string; targetLocale: string; sourceVariantId: string; sourceLocale: string }) {
+    const targetVariant = baseConfig.settings.variants.variants.find((variant) => variant.id === draft.targetVariantId);
+    const targetLanguage = getVariantLanguages(baseConfig, draft.targetVariantId).find((language) => language.code === draft.targetLocale);
+    const sourceVariant = baseConfig.settings.variants.variants.find((variant) => variant.id === draft.sourceVariantId);
+    const sourceLanguage = getVariantLanguages(baseConfig, draft.sourceVariantId).find((language) => language.code === draft.sourceLocale);
+    const message = `确认用「${sourceVariant?.name || draft.sourceVariantId} / ${sourceLanguage?.label || draft.sourceLocale}」覆盖当前「${targetVariant?.name || draft.targetVariantId} / ${targetLanguage?.label || draft.targetLocale}」？当前内容会被直接替换。`;
+    if (!window.confirm(message)) return;
+    const sourceConfig = materializeSiteConfig(baseConfig, draft.sourceVariantId, draft.sourceLocale);
+    updateBaseConfig(writeSiteContentSnapshot(baseConfig, draft.targetVariantId, draft.targetLocale, sourceConfig));
+    setOverrideDraft(null);
   }
 
   function setConfig(next: SiteConfig | ((current: SiteConfig) => SiteConfig)) {
@@ -1103,18 +1132,29 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             {shouldShowVariantPicker ? (
-              <Select
-                value={resolvedActiveVariantId}
-                onChange={(event) => setActiveVariantId(event.target.value)}
-                className="h-9 w-[132px] text-xs"
-                aria-label="选择版本"
-              >
-                {enabledVariants.map((variant) => (
-                  <option key={variant.id} value={variant.id}>
-                    {variant.name}
-                  </option>
-                ))}
-              </Select>
+              <>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={openTopBarOverrideDialog}
+                  className="h-9 rounded-full border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs text-[#1E3A5F] hover:bg-[#DBEAFE]"
+                >
+                  版本覆盖
+                </Button>
+                <Select
+                  value={resolvedActiveVariantId}
+                  onChange={(event) => setActiveVariantId(event.target.value)}
+                  className="h-9 w-[132px] text-xs"
+                  aria-label="选择版本"
+                >
+                  {enabledVariants.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {variant.name}
+                    </option>
+                  ))}
+                </Select>
+              </>
             ) : null}
             {shouldShowLanguagePicker ? (
               <Select
@@ -1472,6 +1512,16 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
             />
           ) : null}
         </EditorModal>
+      ) : null}
+      {overrideDraft ? (
+        <VariantOverrideDialog
+          draft={overrideDraft}
+          variants={[...baseConfig.settings.variants.variants].sort(bySortOrder)}
+          getLanguages={getTopBarVariantLanguages}
+          onChange={setOverrideDraft}
+          onClose={() => setOverrideDraft(null)}
+          onApply={() => applyTopBarVariantOverride(overrideDraft)}
+        />
       ) : null}
     </main>
   );
@@ -3861,9 +3911,6 @@ function ProjectSettingsForm({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activePanel, setActivePanel] = useState<ProjectSettingsPanel>("basic");
   const [languageDraft, setLanguageDraft] = useState<{ variantId: string; code: string; label: string } | null>(null);
-  const [overrideDraft, setOverrideDraft] = useState<{ targetVariantId: string; targetLocale: string; sourceVariantId: string; sourceLocale: string } | null>(
-    null
-  );
   const activeVariant = settings.variants.variants.find((variant) => variant.id === activeVariantId);
   const activeLanguage = getVariantLanguageList(activeVariantId).find((language) => language.code === activeLocale);
 
@@ -4080,28 +4127,6 @@ function ProjectSettingsForm({
     });
   }
 
-  function openVariantOverrideDialog(targetVariantId: string) {
-    const targetLanguages = getVariantLanguageList(targetVariantId);
-    const targetLocale = targetLanguages.some((language) => language.code === activeLocale)
-      ? activeLocale
-      : getVariantMainLanguageCode(targetVariantId);
-    const sourceVariantId = settings.variants.mainVariantId;
-    const sourceLocale = getVariantMainLanguageCode(sourceVariantId);
-    setOverrideDraft({ targetVariantId, targetLocale, sourceVariantId, sourceLocale });
-  }
-
-  function applyVariantOverride(draft: { targetVariantId: string; targetLocale: string; sourceVariantId: string; sourceLocale: string }) {
-    const targetVariant = settings.variants.variants.find((variant) => variant.id === draft.targetVariantId);
-    const targetLanguage = getVariantLanguageList(draft.targetVariantId).find((language) => language.code === draft.targetLocale);
-    const sourceVariant = settings.variants.variants.find((variant) => variant.id === draft.sourceVariantId);
-    const sourceLanguage = getVariantLanguageList(draft.sourceVariantId).find((language) => language.code === draft.sourceLocale);
-    const message = `确认用「${sourceVariant?.name || draft.sourceVariantId} / ${sourceLanguage?.label || draft.sourceLocale}」覆盖「${targetVariant?.name || draft.targetVariantId} / ${targetLanguage?.label || draft.targetLocale}」？当前内容会被直接替换。`;
-    if (!window.confirm(message)) return;
-    const sourceConfig = materializeSiteConfig(config, draft.sourceVariantId, draft.sourceLocale);
-    onChange(writeSiteContentSnapshot(config, draft.targetVariantId, draft.targetLocale, sourceConfig));
-    setOverrideDraft(null);
-  }
-
   function setVariantMainLanguage(variantId: string, locale: string) {
     const language = getVariantLanguageList(variantId).find((item) => item.code === locale);
     if (!window.confirm(`把「${language?.label || locale}」设为这个版本的主语言？`)) return;
@@ -4226,7 +4251,10 @@ function ProjectSettingsForm({
             <ScopeBadges variantName={activeVariant?.name || activeVariantId} languageName={activeLanguage?.label || activeLocale} />
             <div className="grid gap-3 md:grid-cols-2">
               <Field label="网页标题/site title">
-                <Input value={contentSettings.siteTitle} onChange={(event) => patchContentSettings({ siteTitle: event.target.value })} />
+                <Input
+                  value={contentSettings.seoTitle || contentSettings.siteTitle}
+                  onChange={(event) => patchContentSettings({ siteTitle: event.target.value, seoTitle: event.target.value })}
+                />
               </Field>
               <Field label="公开站点 URL/public URL">
                 <Input
@@ -4237,8 +4265,8 @@ function ProjectSettingsForm({
               </Field>
               <Field label="网页描述/site description" className="md:col-span-2">
                 <Textarea
-                  value={contentSettings.siteDescription}
-                  onChange={(event) => patchContentSettings({ siteDescription: event.target.value })}
+                  value={contentSettings.seoDescription || contentSettings.siteDescription}
+                  onChange={(event) => patchContentSettings({ siteDescription: event.target.value, seoDescription: event.target.value })}
                   className="min-h-24"
                 />
               </Field>
@@ -4250,9 +4278,6 @@ function ProjectSettingsForm({
           <section className="grid gap-3">
             <ScopeBadges variantName={activeVariant?.name || activeVariantId} languageName={activeLanguage?.label || activeLocale} />
             <div className="grid gap-3 md:grid-cols-2">
-              <Field label="SEO 标题/SEO title">
-                <Input value={contentSettings.seoTitle ?? ""} onChange={(event) => patchContentSettings({ seoTitle: event.target.value })} />
-              </Field>
               <Field label="Canonical URL">
                 <Input
                   value={contentSettings.seoCanonicalUrl ?? ""}
@@ -4260,15 +4285,7 @@ function ProjectSettingsForm({
                   onChange={(event) => patchContentSettings({ seoCanonicalUrl: event.target.value })}
                 />
               </Field>
-              <Field label="SEO 描述/SEO description" className="md:col-span-2">
-                <Textarea
-                  value={contentSettings.seoDescription ?? ""}
-                  placeholder={contentSettings.siteDescription}
-                  onChange={(event) => patchContentSettings({ seoDescription: event.target.value })}
-                  className="min-h-24"
-                />
-              </Field>
-              <Field label="OG 图片 URL/open graph image" className="md:col-span-2">
+              <Field label="OG 图片 URL/open graph image">
                 <Input value={contentSettings.seoOgImage ?? ""} onChange={(event) => patchContentSettings({ seoOgImage: event.target.value })} />
               </Field>
             </div>
@@ -4323,18 +4340,7 @@ function ProjectSettingsForm({
                 const accessCodeError = getVariantAccessCodeError(variant.id, variant.accessCode);
                 return (
                 <div key={variant.id} className="grid gap-3 rounded-xl border border-[#EAEAEA] p-3">
-                  <div className="grid gap-2 md:grid-cols-[auto_1fr_0.8fr_auto]">
-                    <div className="flex items-end">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => openVariantOverrideDialog(variant.id)}
-                        className="h-10 rounded-full border-[#BFDBFE] bg-[#EFF6FF] px-3 text-xs text-[#1E3A5F] hover:bg-[#DBEAFE]"
-                      >
-                        版本覆盖
-                      </Button>
-                    </div>
+                  <div className="grid gap-2 md:grid-cols-[1fr_0.8fr_auto]">
                     <div className="grid gap-1.5">
                       <Field
                         label={
@@ -4517,16 +4523,6 @@ function ProjectSettingsForm({
           onChange={setLanguageDraft}
           onClose={() => setLanguageDraft(null)}
           onAdd={() => addVariantLanguage(languageDraft.variantId, languageDraft.code, languageDraft.label)}
-        />
-      ) : null}
-      {overrideDraft ? (
-        <VariantOverrideDialog
-          draft={overrideDraft}
-          variants={[...settings.variants.variants].sort(bySortOrder)}
-          getLanguages={getVariantLanguageList}
-          onChange={setOverrideDraft}
-          onClose={() => setOverrideDraft(null)}
-          onApply={() => applyVariantOverride(overrideDraft)}
         />
       ) : null}
     </div>
