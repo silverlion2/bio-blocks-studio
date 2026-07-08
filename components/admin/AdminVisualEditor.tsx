@@ -3751,8 +3751,12 @@ function SocialLinksQuickForm({ profile, onPatch }: { profile: Profile; onPatch:
                 <button
                   type="button"
                   onClick={() => setExpandedLinkId(isExpanded ? null : link.id)}
-                  className="inline-flex min-w-0 flex-1 items-center gap-2 rounded-xl text-left"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#F8FAFC] text-[#64748B] transition hover:bg-[#EFF6FF] hover:text-[#1E3A5F]"
+                  aria-label={isExpanded ? "折叠社交媒体标签" : "展开社交媒体标签"}
                 >
+                  <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isExpanded && "rotate-180")} />
+                </button>
+                <div className="inline-flex min-w-0 flex-1 items-center gap-2 rounded-xl text-left">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#F1F5F9] text-[#1479FF]">
                     <SocialIcon name={link.icon} />
                   </span>
@@ -3760,8 +3764,7 @@ function SocialLinksQuickForm({ profile, onPatch }: { profile: Profile; onPatch:
                     <span className="truncate text-sm font-semibold text-[#111]">{link.label || "New Link"}</span>
                     <span className="truncate text-xs text-[#64748B]">{link.href || link.actionType || "link"}</span>
                   </span>
-                  <ChevronDown className={cn("ml-auto h-4 w-4 shrink-0 text-[#94A3B8] transition", isExpanded && "rotate-180")} />
-                </button>
+                </div>
               <div className="flex gap-1">
                 <Button type="button" variant="ghost" size="sm" disabled={index === 0} onClick={() => patchLinks(moveItem(orderedLinks, index, Math.max(0, index - 1)))}>
                   ↑
@@ -3774,8 +3777,9 @@ function SocialLinksQuickForm({ profile, onPatch }: { profile: Profile; onPatch:
                 </Button>
               </div>
             </div>
-              {isExpanded ? (
-                <div className="grid gap-3 border-t border-[#EEF2F7] pt-3">
+              <div className={cn("grid transition-[grid-template-rows] duration-200 ease-out", isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]")}>
+                <div className="min-h-0 overflow-hidden">
+                  <div className="grid gap-3 border-t border-[#EEF2F7] pt-3">
                   <div className="grid gap-3 md:grid-cols-2">
                     <Field label="名称/label">
                       <Input value={link.label} onChange={(event) => updateSocial(link.id, { label: event.target.value })} />
@@ -3830,7 +3834,8 @@ function SocialLinksQuickForm({ profile, onPatch }: { profile: Profile; onPatch:
                     </label>
                   </div>
                 </div>
-              ) : null}
+                </div>
+              </div>
             </div>
           );
         })}
@@ -3928,6 +3933,7 @@ function ProjectSettingsForm({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [activePanel, setActivePanel] = useState<ProjectSettingsPanel>("basic");
   const [languageDraft, setLanguageDraft] = useState<{ variantId: string; code: string; label: string } | null>(null);
+  const [collapsedVariantIds, setCollapsedVariantIds] = useState<Set<string>>(() => new Set());
   const activeVariant = settings.variants.variants.find((variant) => variant.id === activeVariantId);
   const activeLanguage = getVariantLanguageList(activeVariantId).find((language) => language.code === activeLocale);
 
@@ -3966,6 +3972,18 @@ function ProjectSettingsForm({
         }
       },
       contentVariants: nextId === id ? config.contentVariants : renameVariantContentKeys(config.contentVariants ?? {}, id, nextId)
+    });
+  }
+
+  function toggleVariantCollapsed(variantId: string) {
+    setCollapsedVariantIds((current) => {
+      const next = new Set(current);
+      if (next.has(variantId)) {
+        next.delete(variantId);
+      } else {
+        next.add(variantId);
+      }
+      return next;
     });
   }
 
@@ -4370,101 +4388,127 @@ function ProjectSettingsForm({
             <div className="grid gap-3">
               {[...settings.variants.variants].sort(bySortOrder).map((variant) => {
                 const accessCodeError = getVariantAccessCodeError(variant.id, variant.accessCode);
+                const isCollapsed = collapsedVariantIds.has(variant.id);
                 return (
-                <div key={variant.id} className="grid gap-3 rounded-xl border border-[#EAEAEA] p-3">
-                  <div className="grid gap-2 md:grid-cols-[1fr_0.8fr_auto]">
-                    <div className="grid gap-1.5">
-                      <Field
-                        label={
-                          <>
-                            名称 <span className="text-xs font-normal text-[#94A3B8]">（仅在编辑器显示）</span>
-                          </>
-                        }
+                  <div key={variant.id} className="grid gap-3 rounded-xl border border-[#EAEAEA] p-3">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleVariantCollapsed(variant.id)}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[#F8FAFC] text-[#64748B] transition hover:bg-[#EFF6FF] hover:text-[#1E3A5F]"
+                        aria-label={isCollapsed ? "展开版本" : "折叠版本"}
                       >
-                        <Input value={variant.name} onChange={(event) => updateVariant(variant.id, { name: event.target.value })} />
-                      </Field>
+                        <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", !isCollapsed && "rotate-180")} />
+                      </button>
+                      <div className="grid min-w-0 flex-1 gap-0.5">
+                        <p className="truncate text-sm font-semibold text-[#111]">{variant.name || "New version"}</p>
+                        <p className="truncate text-xs text-[#64748B]">
+                          访问后缀：{variant.accessCode.trim() ? `/${variant.accessCode.trim()}` : "主版本留空"}
+                        </p>
+                      </div>
                     </div>
-                    <div className="grid gap-1.5">
-                      <Field label="访问后缀">
-                        <Input
-                          value={variant.accessCode}
-                          placeholder={variant.id === settings.variants.mainVariantId ? "主版本留空" : variant.id}
-                          onChange={(event) => updateVariant(variant.id, { accessCode: event.target.value })}
-                          className={cn(accessCodeError && "border-red-300 bg-red-50/60 text-red-700 focus:border-red-400 focus:ring-red-100")}
-                        />
-                      </Field>
-                      {accessCodeError ? <p className="text-xs text-red-600">{accessCodeError}</p> : null}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeVariant(variant.id)}
-                      disabled={settings.variants.variants.length <= 1}
-                      className="text-red-600 hover:bg-red-50 hover:text-red-700 disabled:text-[#CBD5E1] disabled:hover:bg-transparent"
-                    >
-                      删除
-                    </Button>
-                  </div>
-                  <div className="grid gap-2">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-xs font-semibold text-[#64748B]">这个版本的语言</p>
-                      <Button type="button" variant="secondary" size="sm" onClick={() => openAddVariantLanguage(variant.id)} className="h-8 px-2">
-                        <Plus className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {getVariantLanguageList(variant.id)
-                        .sort(bySortOrder)
-                        .map((language) => {
-                          const isMainLocale = language.code === getVariantMainLanguageCode(variant.id);
-                          const isEnabled = getLanguageIsEnabledForVariant(variant.id, language.code);
-                          return (
-                            <div
-                              key={`${variant.id}:${language.code}`}
-                              className={cn(
-                                "inline-flex w-fit max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs",
-                                isEnabled ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#1E3A5F]" : "border-[#EAEAEA] bg-[#F8FAFC] text-[#64748B]"
-                              )}
-                            >
-                              <Checkbox
-                                checked={isEnabled}
-                                disabled={isMainLocale}
-                                onChange={(event) => setVariantLanguage(variant.id, language.code, event.target.checked)}
-                              />
-                              <Input
-                                value={language.label}
-                                onChange={(event) => updateVariantLanguageLabel(variant.id, language.code, event.target.value)}
-                                className="h-7 min-w-[56px] max-w-[180px] border-transparent bg-transparent px-1 py-0 text-xs"
-                                style={{ width: `${Math.max(5, Math.min(18, language.label.length + 1))}ch` }}
-                              />
-                              {isMainLocale ? <span className="rounded-full bg-white px-2 py-0.5 text-[11px] text-[#1E3A5F]">主语言</span> : null}
-                              {!isMainLocale ? (
-                                <button
-                                  type="button"
-                                  onClick={() => setVariantMainLanguage(variant.id, language.code)}
-                                  className="text-[#5B7896] hover:text-[#1E3A5F]"
-                                  aria-label={`设为主语言 ${language.label}`}
-                                >
-                                  <Pin className="h-3 w-3" />
-                                </button>
-                              ) : null}
-                              {!isMainLocale ? (
-                                <button
-                                  type="button"
-                                  onClick={() => removeVariantLanguage(variant.id, language.code)}
-                                  className="text-red-500 hover:text-red-700"
-                                  aria-label={`删除 ${language.label}`}
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
-                              ) : null}
+                    <div className={cn("grid transition-[grid-template-rows] duration-200 ease-out", isCollapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]")}>
+                      <div className="min-h-0 overflow-hidden">
+                        <div className="grid gap-3 pt-1">
+                          <div className="grid gap-2 md:grid-cols-[1fr_0.8fr_auto]">
+                            <div className="grid gap-1.5">
+                              <Field
+                                label={
+                                  <>
+                                    名称 <span className="text-xs font-normal text-[#94A3B8]">（仅在编辑器显示）</span>
+                                  </>
+                                }
+                              >
+                                <Input value={variant.name} onChange={(event) => updateVariant(variant.id, { name: event.target.value })} />
+                              </Field>
                             </div>
-                          );
-                        })}
+                            <div className="grid gap-1.5">
+                              <Field label="访问后缀">
+                                <Input
+                                  value={variant.accessCode}
+                                  placeholder={variant.id === settings.variants.mainVariantId ? "主版本留空" : variant.id}
+                                  onChange={(event) => updateVariant(variant.id, { accessCode: event.target.value })}
+                                  className={cn(accessCodeError && "border-red-300 bg-red-50/60 text-red-700 focus:border-red-400 focus:ring-red-100")}
+                                />
+                              </Field>
+                              {accessCodeError ? <p className="text-xs text-red-600">{accessCodeError}</p> : null}
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeVariant(variant.id)}
+                              disabled={settings.variants.variants.length <= 1}
+                              className="text-red-600 hover:bg-red-50 hover:text-red-700 disabled:text-[#CBD5E1] disabled:hover:bg-transparent"
+                            >
+                              删除
+                            </Button>
+                          </div>
+                          <div className="grid gap-2">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-xs font-semibold text-[#64748B]">这个版本的语言</p>
+                              <Button type="button" variant="secondary" size="sm" onClick={() => openAddVariantLanguage(variant.id)} className="h-8 px-2">
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {getVariantLanguageList(variant.id)
+                                .sort(bySortOrder)
+                                .map((language) => {
+                                  const isMainLocale = language.code === getVariantMainLanguageCode(variant.id);
+                                  const isEnabled = getLanguageIsEnabledForVariant(variant.id, language.code);
+                                  return (
+                                    <div
+                                      key={`${variant.id}:${language.code}`}
+                                      className={cn(
+                                        "inline-flex w-fit max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-xs",
+                                        isEnabled ? "border-[#BFDBFE] bg-[#EFF6FF] text-[#1E3A5F]" : "border-[#EAEAEA] bg-[#F8FAFC] text-[#64748B]"
+                                      )}
+                                    >
+                                      <Checkbox
+                                        checked={isEnabled}
+                                        disabled={isMainLocale}
+                                        onChange={(event) => setVariantLanguage(variant.id, language.code, event.target.checked)}
+                                      />
+                                      <Input
+                                        value={language.label}
+                                        onChange={(event) => updateVariantLanguageLabel(variant.id, language.code, event.target.value)}
+                                        className="h-7 min-w-[56px] max-w-[180px] border-transparent bg-transparent px-1 py-0 text-xs"
+                                        style={{ width: `${Math.max(5, Math.min(18, language.label.length + 1))}ch` }}
+                                      />
+                                      <span className="select-none rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-semibold text-[#64748B]">
+                                        {language.code}
+                                      </span>
+                                      {isMainLocale ? <span className="rounded-full bg-white px-2 py-0.5 text-[11px] text-[#1E3A5F]">主语言</span> : null}
+                                      {!isMainLocale ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => setVariantMainLanguage(variant.id, language.code)}
+                                          className="text-[#5B7896] hover:text-[#1E3A5F]"
+                                          aria-label={`设为主语言 ${language.label}`}
+                                        >
+                                          <Pin className="h-3 w-3" />
+                                        </button>
+                                      ) : null}
+                                      {!isMainLocale ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => removeVariantLanguage(variant.id, language.code)}
+                                          className="text-red-500 hover:text-red-700"
+                                          aria-label={`删除 ${language.label}`}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </button>
+                                      ) : null}
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
                 );
               })}
             </div>
@@ -4766,7 +4810,7 @@ function ScopeBadges({ variantName, languageName }: { variantName: string; langu
 
 function modalTitle(modal: NonNullable<ModalState>) {
   if (modal.type === "tags") return "编辑 Tags";
-  if (modal.type === "social") return "编辑社交按钮";
+  if (modal.type === "social") return "编辑社交媒体标签";
   if (modal.type === "block") return "编辑 Block";
   if (modal.type === "add-block") return "添加 Block";
   return "项目设置";
