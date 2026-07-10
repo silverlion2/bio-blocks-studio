@@ -5,6 +5,7 @@ import { publicLocaleCookieName, publicVariantCookieName } from "@/lib/public-va
 import {
   buildRenderModel,
   getAvailableLanguagesForVariant,
+  getMainVariantId,
   getVariantAllowSeoIndex,
   materializeSiteConfig,
   resolvePublicLocale,
@@ -59,7 +60,11 @@ export default async function HomePage() {
       renderModel={model}
       languageSwitcher={{
         currentLocale: locale,
-        languages: getAvailableLanguagesForVariant(baseConfig, variantId)
+        languages: getAvailableLanguagesForVariant(baseConfig, variantId),
+        accessCode:
+          variantId === getMainVariantId(baseConfig)
+            ? ""
+            : baseConfig.settings.variants.variants.find((variant) => variant.id === variantId)?.accessCode ?? ""
       }}
     />
   );

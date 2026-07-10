@@ -665,11 +665,13 @@ SESSION_SECRET
 | 路由 | 说明 |
 |---|---|
 | `/` | 公开个人主页 |
+| `/[locale]` | 主版本指定语言入口，例如 `/en`、`/zh-CN` |
 | `/admin/login` | 后台登录 |
 | `/admin` | 可视化后台编辑器 |
 | `/api/admin/config` | 登录后读取和保存配置 |
 | `/api/admin/upload` | 登录后上传图片 |
 | `/[accessCode]` | 隐藏版本访问入口，例如 `/resume`、`/event`、`/social` |
+| `/[accessCode]/[locale]` | 隐藏版本指定语言入口，例如 `/resume/en` |
 
 ---
 

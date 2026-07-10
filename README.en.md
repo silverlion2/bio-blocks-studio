@@ -673,11 +673,13 @@ They must stay server-side only. Only `NEXT_PUBLIC_SITE_URL` may be exposed to t
 | Route               | Description                                                     |
 | ------------------- | --------------------------------------------------------------- |
 | `/`                 | Public personal homepage                                        |
+| `/[locale]`         | Main-version locale entry, such as `/en` or `/zh-CN`            |
 | `/admin/login`      | Admin login                                                     |
 | `/admin`            | Visual admin editor                                             |
 | `/api/admin/config` | Read and save config after login                                |
 | `/api/admin/upload` | Upload images after login                                       |
 | `/[accessCode]`     | Hidden version entry, such as `/resume`, `/event`, or `/social` |
+| `/[accessCode]/[locale]` | Hidden-version locale entry, such as `/resume/en`          |
 
 ---
 

@@ -60,12 +60,15 @@ Search indexing is controlled per variant with `allowSeoIndex`. Existing configs
 
 Public routing uses hidden short access codes:
 
+- `app/[accessCode]/route.ts` also recognizes an enabled main-version locale such as `/en`; it clears any hidden-version session, selects that language, and redirects to `/`.
 - `app/[accessCode]/route.ts` checks whether the path matches an enabled variant access code such as `/u1`.
+- `app/[accessCode]/[locale]/route.ts` selects both a hidden version and one of its enabled languages, such as `/u1/en`.
 - A valid access code writes HTTP-only variant cookies and redirects to `/`, so the visible URL returns to the normal homepage.
+- A hidden access code without a locale resets that hidden version to its own main language.
 - `proxy.ts` decrements the variant view counter on `/`; after 10 homepage visits it clears the variant cookies.
 - `/reset` and `/?reset` clear the public variant cookies immediately and redirect to the main homepage.
 - `app/page.tsx` resolves the active variant from cookies, resolves locale from the visitor language cookie first and then `Accept-Language`, and emits `robots` metadata from the active variant's `allowSeoIndex` setting.
-- The public language switcher is only shown when the active variant has more than one enabled language. It writes `bio_locale`, but the server accepts that cookie only when the locale belongs to the current variant's enabled language list; otherwise rendering falls back to browser language or the variant main language. `/reset` clears the variant cookies and this manual language cookie.
+- The public language switcher is only shown when the active variant has more than one enabled language. It navigates through the explicit locale route and immediately shows a soft, full-screen preparation state during the transition. The server writes `bio_locale` only for a locale that belongs to the active variant's enabled language list; otherwise rendering falls back to browser language or the variant main language. `/reset` clears the variant cookies and this manual language cookie.
 
 The short access code namespace must not collide with system paths such as `admin`, `api`, `icon`, `_next`, `favicon.ico`, or `reset`. `lib/validators.ts` enforces this before config save.
 
@@ -73,6 +76,7 @@ The short access code namespace must not collide with system paths such as `admi
 
 - `app/page.tsx`: public page entry.
 - `app/[accessCode]/route.ts`: hidden variant access-code entry and redirect.
+- `app/[accessCode]/[locale]/route.ts`: hidden variant plus explicit locale entry and redirect.
 - `app/admin/page.tsx`: protected admin entry.
 - `proxy.ts`: public variant cookie view-count expiry.
 - `components/admin/AdminVisualEditor.tsx`: primary admin editor.

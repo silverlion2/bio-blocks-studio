@@ -147,6 +147,14 @@ export function getAvailableLanguagesForVariant(config: SiteConfig, variantId: s
     : [mainLanguage, ...availableLanguages].sort(bySortOrder);
 }
 
+export function findAvailableLocaleForVariant(config: SiteConfig, variantId: string, locale: string) {
+  const normalizedLocale = locale.trim().toLowerCase();
+  if (!normalizedLocale) return null;
+  return getAvailableLanguagesForVariant(config, variantId).find(
+    (language) => language.code.toLowerCase() === normalizedLocale
+  )?.code ?? null;
+}
+
 export function getEnabledVariants(config: SiteConfig): SiteVariant[] {
   const variants = config.settings.variants.variants.length
     ? config.settings.variants.variants

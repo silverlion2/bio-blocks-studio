@@ -18,6 +18,7 @@ type SiteLayoutProps = {
   languageSwitcher?: {
     currentLocale: string;
     languages: SiteLanguage[];
+    accessCode: string;
   };
 };
 
@@ -46,6 +47,7 @@ export function SiteLayout({ config, renderModel, languageSwitcher }: SiteLayout
         <PublicLanguageSwitcher
           currentLocale={languageSwitcher.currentLocale}
           languages={languageSwitcher.languages}
+          accessCode={languageSwitcher.accessCode}
           className="fixed left-4 top-4 z-40 md:left-6 md:top-6"
         />
       ) : null}

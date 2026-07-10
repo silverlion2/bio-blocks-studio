@@ -8,12 +8,14 @@ import { cn } from "@/lib/utils";
 type PublicLanguageSwitcherProps = {
   currentLocale: string;
   languages: SiteLanguage[];
+  accessCode: string;
   className?: string;
   buttonClassName?: string;
 };
 
-export function PublicLanguageSwitcher({ currentLocale, languages, className, buttonClassName }: PublicLanguageSwitcherProps) {
+export function PublicLanguageSwitcher({ currentLocale, languages, accessCode, className, buttonClassName }: PublicLanguageSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isPreparing, setIsPreparing] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
   const visibleLanguages = languages.filter((language) => language.isEnabled).sort((a, b) => a.sortOrder - b.sortOrder);
   const currentLanguage = visibleLanguages.find((language) => language.code === currentLocale) ?? visibleLanguages[0];
@@ -33,13 +35,19 @@ export function PublicLanguageSwitcher({ currentLocale, languages, className, bu
 
   if (visibleLanguages.length <= 1 || !currentLanguage) return null;
 
-  async function selectLanguage(locale: string) {
-    await fetch("/api/public/locale", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ locale })
-    });
-    window.location.reload();
+  function selectLanguage(locale: string) {
+    if (locale === currentLanguage.code || isPreparing) {
+      setIsOpen(false);
+      return;
+    }
+
+    setIsPreparing(true);
+    setIsOpen(false);
+    const encodedLocale = encodeURIComponent(locale);
+    const languagePath = accessCode
+      ? `/${encodeURIComponent(accessCode)}/${encodedLocale}`
+      : `/${encodedLocale}`;
+    window.setTimeout(() => window.location.assign(languagePath), 180);
   }
 
   return (
@@ -71,6 +79,7 @@ export function PublicLanguageSwitcher({ currentLocale, languages, className, bu
                 key={language.code}
                 type="button"
                 onClick={() => selectLanguage(language.code)}
+                disabled={isPreparing}
                 className={cn(
                   "flex items-center justify-between rounded-2xl border px-3 py-2 text-left text-sm font-medium transition",
                   isActive
@@ -85,6 +94,18 @@ export function PublicLanguageSwitcher({ currentLocale, languages, className, bu
           })}
         </div>
       </div>
+
+      {isPreparing ? (
+        <div
+          className="fixed inset-0 z-[100] flex animate-in flex-col items-center justify-center bg-white/95 text-[#111827] fade-in duration-300 backdrop-blur-[2px]"
+          role="status"
+          aria-live="polite"
+          aria-label="正在准备中"
+        >
+          <span className="h-7 w-7 animate-spin rounded-full border-2 border-[#D1D5DB] border-t-[#111827]" aria-hidden="true" />
+          <span className="mt-4 text-[13px] font-medium tracking-[0.08em] text-[#6B7280]">正在准备中</span>
+        </div>
+      ) : null}
     </div>
   );
 }
