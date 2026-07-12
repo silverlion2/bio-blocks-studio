@@ -249,7 +249,12 @@ ensure_blob_store() {
     echo "Blob store already exists or is connected: $BLOB_STORE_NAME" >&2
   else
     echo "Creating Vercel Blob store: $BLOB_STORE_NAME" >&2
-    vercel blob create-store "$BLOB_STORE_NAME" --access public --region "$BLOB_REGION"
+    # A linked project plus --yes connects the store and injects its write token.
+    # Name every target explicitly so an agent never relies on CLI prompt defaults.
+    vercel blob create-store "$BLOB_STORE_NAME" --access public --region "$BLOB_REGION" --yes \
+      --environment production \
+      --environment preview \
+      --environment development
   fi
 
   rm -f /tmp/vercel-blob-stores.$$ /tmp/vercel-blob-stores.err.$$

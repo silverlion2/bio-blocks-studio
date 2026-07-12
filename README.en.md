@@ -320,6 +320,16 @@ Please follow these steps:
    - Blob Store should use Public access, because the public homepage needs to read config and images.
    - Blob Store must be connected to the current Vercel Project.
    - When Vercel creates and connects a Blob Store, it usually adds related environment variables automatically.
+   - If the AI/CLI has already run `vercel link` in this project directory, prefer:
+
+     ```bash
+     vercel blob create-store <project-name>-blob --access public --yes \
+       --environment production \
+       --environment preview \
+       --environment development
+     ```
+
+     `--yes` accepts the connection prompts, and the explicit environments make Vercel inject `BLOB_READ_WRITE_TOKEN` into all three.
    - Please specifically confirm that the current Vercel Project Production environment contains:
 
      BLOB_READ_WRITE_TOKEN

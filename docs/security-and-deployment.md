@@ -107,7 +107,7 @@ The app can run without Vercel Blob:
 ## Recommended Production Setup
 
 1. Deploy on Vercel.
-2. Enable Vercel Blob.
+2. Enable Vercel Blob. After `vercel link`, an AI/CLI can create and connect the public store across all app environments with `vercel blob create-store <project-name>-blob --access public --yes --environment production --environment preview --environment development`; this injects `BLOB_READ_WRITE_TOKEN` into the connected project.
 3. Set `NEXT_PUBLIC_SITE_URL` to the production origin.
 4. Set `BLOB_READ_WRITE_TOKEN`.
 5. Set `ADMIN_PASSWORD` for the simplest setup, or set `ADMIN_PASSWORD_HASH` for the stronger setup.

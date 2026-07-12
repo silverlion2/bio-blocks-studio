@@ -317,6 +317,16 @@ https://github.com/JiahaoTang-Alvin/bio-blocks-studio
    - Blob Store 使用 Public access，因为公开主页需要读取配置和图片。
    - Blob Store 要连接到当前 Vercel Project。
    - Vercel 创建并连接 Blob Store 时，通常会自动添加相关环境变量。
+   - 如果 AI/CLI 已经在当前项目目录完成 `vercel link`，优先执行：
+
+     ```bash
+     vercel blob create-store <project-name>-blob --access public --yes \
+       --environment production \
+       --environment preview \
+       --environment development
+     ```
+
+     `--yes` 会接受连接提示；显式环境参数会让 Vercel 将 `BLOB_READ_WRITE_TOKEN` 注入这三个环境。
    - 请重点确认当前 Vercel Project 的 Production 环境变量里存在：
 
      BLOB_READ_WRITE_TOKEN

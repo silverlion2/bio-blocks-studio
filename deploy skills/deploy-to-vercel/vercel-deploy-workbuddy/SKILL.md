@@ -48,7 +48,8 @@ bash "deploy skills/deploy-to-vercel/vercel-deploy-workbuddy/scripts/deploy-verc
 
 - Prefer existing `VERCEL_TOKEN`, then existing `vercel login`, then opening login/token setup.
 - Prefer Vercel CLI automation before dashboard instructions.
-- Prefer `vercel blob create-store` before asking the user to create Blob manually.
+- After `vercel link`, create a public Blob store with `vercel blob create-store <name> --access public --yes --environment production --environment preview --environment development`. The linked-project flow connects the store and injects `BLOB_READ_WRITE_TOKEN` into those environments.
+- Prefer that CLI flow before asking the user to create Blob manually. If the store already exists or token verification fails, use the Blob project's connection settings as the fallback.
 - If app source references `BLOB_READ_WRITE_TOKEN`, do not rewrite the app to OIDC automatically. Confirm or set `BLOB_READ_WRITE_TOKEN` instead.
 - `BLOB_STORE_ID` and `VERCEL_OIDC_TOKEN` alone are not enough for apps that explicitly require `BLOB_READ_WRITE_TOKEN`.
 - Read `.vercel/project.json` instead of asking the user for project IDs.

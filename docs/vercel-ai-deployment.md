@@ -112,10 +112,13 @@ Important Blob rule for this project:
 4. Prepare Blob:
    ```bash
    vercel blob list-stores
-   vercel blob create-store <project-name>-blob --access public
+   vercel blob create-store <project-name>-blob --access public --yes \
+     --environment production \
+     --environment preview \
+     --environment development
    vercel env pull .env.local
    ```
-   Try the CLI path before asking the user to create Blob in the dashboard.
+   Run this only after `vercel link` has linked the local checkout to the target project. In the linked-project flow, `--yes` accepts the Blob connection prompts; the explicit `--environment` flags connect the store to all three environments and cause Vercel to inject `BLOB_READ_WRITE_TOKEN` for each one. Try this CLI path before asking the user to create Blob in the dashboard.
 
    After Blob creation, verify the write token:
    ```bash
@@ -123,7 +126,7 @@ Important Blob rule for this project:
    grep '^BLOB_READ_WRITE_TOKEN=' .env.local 2>/dev/null
    ```
 
-   If only `BLOB_STORE_ID` or `BLOB_WEBHOOK_PUBLIC_KEY` exists, setup is incomplete for this project. Open the Blob Store -> Projects connection and add the read-write token env var to this connection. The Vercel UI labels this action as:
+   If only `BLOB_STORE_ID` or `BLOB_WEBHOOK_PUBLIC_KEY` exists, setup is incomplete for this project. This usually means the store was created outside the linked-project flow, or the existing store is not connected with its write token. Open the Blob Store -> Projects connection and add the read-write token env var to this connection. The Vercel UI labels this action as:
 
    ```text
    Add read-write token env var to this connection
