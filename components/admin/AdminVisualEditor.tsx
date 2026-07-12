@@ -96,7 +96,7 @@ import {
   getLogicalColumnSpan
 } from "@/constants/block-layout";
 import { BlockCard } from "@/components/blocks/BlockCard";
-import { BlockIcon } from "@/components/blocks/BlockIcon";
+import { BlockIcon, getBlockIconColor } from "@/components/blocks/BlockIcon";
 import { BlockForm } from "@/components/admin/BlockForm";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
@@ -1933,7 +1933,7 @@ function DragOverlayBlockPreview({ block, width, height }: { block: Block; width
       ) : (
         <div className="flex h-full flex-col justify-between gap-3">
           <div className="grid gap-2">
-            {block.icon ? <div className="flex justify-end"><BlockIcon name={block.icon} className="h-5 w-5 text-[#1479FF]" /></div> : null}
+            {block.icon ? <div className="flex"><BlockIcon name={block.icon} className="h-5 w-5" style={{ color: getBlockIconColor(block.metadata?.iconColor) }} /></div> : null}
             <h3 className="line-clamp-2 text-lg font-semibold leading-tight">{block.title}</h3>
             {block.subtitle ? <p className="line-clamp-2 text-sm text-[#475569]">{block.subtitle}</p> : null}
             {block.description ? <p className="line-clamp-3 text-sm leading-6 text-[#555]">{block.description}</p> : null}

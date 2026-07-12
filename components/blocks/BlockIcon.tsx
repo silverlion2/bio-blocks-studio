@@ -15,6 +15,7 @@ import {
   Youtube,
   Linkedin
 } from "lucide-react";
+import type { CSSProperties } from "react";
 
 export const blockIconPresets = [
   "build",
@@ -36,21 +37,25 @@ export const blockIconPresets = [
 
 export type BlockIconName = (typeof blockIconPresets)[number];
 
-export function BlockIcon({ name, className = "h-6 w-6" }: { name?: string; className?: string }) {
+export function getBlockIconColor(value: unknown) {
+  return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#1677FF";
+}
+
+export function BlockIcon({ name, className = "h-6 w-6", style }: { name?: string; className?: string; style?: CSSProperties }) {
   if (!name) return null;
-  if (name === "build") return <Boxes className={className} />;
-  if (name === "briefcase") return <BriefcaseBusiness className={className} />;
-  if (name === "chef-hat") return <ChefHat className={className} />;
-  if (name === "book-open") return <BookOpen className={className} />;
-  if (name === "award") return <Award className={className} />;
-  if (name === "map") return <Map className={className} />;
-  if (name === "sparkle") return <Sparkles className={className} />;
-  if (name === "github") return <Github className={className} />;
-  if (name === "x" || name === "twitter") return <Twitter className={className} />;
-  if (name === "instagram") return <Instagram className={className} />;
-  if (name === "youtube") return <Youtube className={className} />;
-  if (name === "linkedin") return <Linkedin className={className} />;
-  if (name === "website" || name === "globe") return <Globe2 className={className} />;
-  if (name === "mail" || name === "email") return <Mail className={className} />;
-  return <LinkIcon className={className} />;
+  if (name === "build") return <Boxes className={className} style={style} />;
+  if (name === "briefcase") return <BriefcaseBusiness className={className} style={style} />;
+  if (name === "chef-hat") return <ChefHat className={className} style={style} />;
+  if (name === "book-open") return <BookOpen className={className} style={style} />;
+  if (name === "award") return <Award className={className} style={style} />;
+  if (name === "map") return <Map className={className} style={style} />;
+  if (name === "sparkle") return <Sparkles className={className} style={style} />;
+  if (name === "github") return <Github className={className} style={style} />;
+  if (name === "x" || name === "twitter") return <Twitter className={className} style={style} />;
+  if (name === "instagram") return <Instagram className={className} style={style} />;
+  if (name === "youtube") return <Youtube className={className} style={style} />;
+  if (name === "linkedin") return <Linkedin className={className} style={style} />;
+  if (name === "website" || name === "globe") return <Globe2 className={className} style={style} />;
+  if (name === "mail" || name === "email") return <Mail className={className} style={style} />;
+  return <LinkIcon className={className} style={style} />;
 }

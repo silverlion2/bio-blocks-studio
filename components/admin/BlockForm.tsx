@@ -15,7 +15,7 @@ import type { Block, BlockActionType } from "@/types/block";
 import { blockActionTypes } from "@/constants/block-types";
 import { Checkbox, Field, Input, Select, Textarea } from "@/components/ui/field";
 import { ImageCropUploader } from "@/components/admin/ImageCropUploader";
-import { BlockIcon, blockIconPresets } from "@/components/blocks/BlockIcon";
+import { BlockIcon, blockIconPresets, getBlockIconColor } from "@/components/blocks/BlockIcon";
 import { cn, isSectionTextBlock } from "@/lib/utils";
 import { editorCopy, type EditorLanguage } from "@/components/admin/editor-i18n";
 
@@ -40,6 +40,8 @@ export function BlockForm({
   const copyText = typeof block.metadata?.copyText === "string" ? block.metadata.copyText : "";
   const isSectionBlock = isSectionTextBlock(block);
   const isPlainTextBlock = block.metadata?.textVariant === "plain";
+  const iconColorValue = typeof block.metadata?.iconColor === "string" ? block.metadata.iconColor : "#1677FF";
+  const iconPreviewColor = getBlockIconColor(iconColorValue);
 
   function patchHref(value: string) {
     onPatch({ href: value, icon: inferIconFromUrl(value, block.icon) });
@@ -151,7 +153,7 @@ export function BlockForm({
               placeholder={editorLanguage === "zh-CN" ? "例如：精选" : "Example: Featured"}
             />
           </Field>
-          <Field label={editorLanguage === "zh-CN" ? "右上角图标" : "Top-right Icon"} className="md:col-span-2">
+          <Field label={editorLanguage === "zh-CN" ? "左上角图标" : "Top-left Icon"} className="md:col-span-2">
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
@@ -176,11 +178,38 @@ export function BlockForm({
                     block.icon === icon ? "border-[#1479FF] bg-[#1479FF] text-white" : "border-[#EAEAEA] bg-white text-[#475569] hover:border-[#1479FF]/40"
                   )}
                 >
-                  <BlockIcon name={icon} className="h-4 w-4" />
+                  <BlockIcon name={icon} className="h-4 w-4" style={{ color: block.icon === icon ? undefined : iconPreviewColor }} />
                   <span>{getBlockIconLabel(icon, editorLanguage)}</span>
                 </button>
               ))}
             </div>
+            {block.icon ? (
+              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-[#E6EDF7] bg-[#F8FAFD] px-3 py-2.5">
+                <span className="grid h-10 w-10 place-items-center rounded-xl border border-white bg-white shadow-sm">
+                  <BlockIcon name={block.icon} className="h-5 w-5" style={{ color: iconPreviewColor }} />
+                </span>
+                <label className="relative grid h-10 w-10 cursor-pointer place-items-center overflow-hidden rounded-xl border border-[#D9E2F0] bg-white shadow-sm">
+                  <span className="h-6 w-6 rounded-lg border border-black/10" style={{ backgroundColor: iconPreviewColor }} />
+                  <input
+                    type="color"
+                    value={iconPreviewColor}
+                    onChange={(event) => patchMetadata({ iconColor: event.target.value.toUpperCase() })}
+                    className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    aria-label={editorLanguage === "zh-CN" ? "图标颜色" : "Icon color"}
+                  />
+                </label>
+                <Input
+                  value={iconColorValue}
+                  onChange={(event) => patchMetadata({ iconColor: event.target.value })}
+                  placeholder="#1677FF"
+                  maxLength={7}
+                  spellCheck={false}
+                  className="w-32 font-mono uppercase"
+                  aria-label={editorLanguage === "zh-CN" ? "图标颜色 HEX" : "Icon color HEX"}
+                />
+                <span className="text-xs font-medium text-[#64748B]">{editorLanguage === "zh-CN" ? "图标颜色（HEX）" : "Icon color (HEX)"}</span>
+              </div>
+            ) : null}
           </Field>
           {block.actionType === "copy" ? (
             <Field label={copy.blockCopyText} className="md:col-span-2">
