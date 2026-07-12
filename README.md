@@ -262,118 +262,13 @@ GitHub 适合用来托管源码，Vercel 适合用来运行应用。
 
 ### 🤖 方式一：让 AI Agent 帮你部署
 
-如果你使用 Codex、Claude Code、Cursor 或其他代码 Agent，并且它已经连接了 Vercel的MCP 或 CLI 工具，可以把下面这段提示词交给 AI，让它帮你完成部署。
+如果你使用 Codex、Claude Code、Cursor、Workbuddy 或其他代码 Agent，可以把下面这段提示词交给 AI，让它帮你完成部署。
 
 复制下面完整提示词给 AI Agent：
 
 ```text
-请帮我把这个开源项目直接部署到我的 Vercel，并完成部署后的可用性检查。
-
-项目仓库：
-https://github.com/JiahaoTang-Alvin/bio-blocks-studio
-
-我的后台登录密码：[请把这里改成你想要的后台登录密码]
-
-项目说明：
-这是一个 Next.js App Router 项目，需要 Vercel 运行时。
-公开页面是个人主页。
-后台路径是 /admin/login 和 /admin。
-生产环境使用 Vercel Blob 保存站点配置和上传图片。
-公开页面只读取内容，后台登录后才可以保存配置和上传图片。
-
-请按下面步骤执行：
-1. 在 Vercel 中直接导入公开仓库
-   - 打开 Vercel 的 Add New Project / Import Project。
-   - 直接使用这个公开仓库链接导入：
-     https://github.com/JiahaoTang-Alvin/bio-blocks-studio
-   - 如果 Vercel 支持通过 Git URL 导入，请直接使用 Git URL。
-   - 如果 Vercel 需要我登录、授权 GitHub、授权 Vercel 或确认导入，请明确告诉我需要手动点击哪里。
-2. 使用默认项目配置
-   - Framework Preset 使用 Next.js。
-   - Root Directory 保持为 ./。
-   - Install Command、Build Command、Output Directory 保持 Vercel 默认识别结果。
-   - 不要主动修改构建配置，除非构建日志明确要求。
-
-3. 设置 Vercel 环境变量
-   请在 Vercel Project 的 Production 环境中设置：
-   NEXT_PUBLIC_SITE_URL=部署后的正式访问地址
-   ADMIN_PASSWORD=我上面提供的后台登录密码
-
-   重要：
-   - ADMIN_PASSWORD 必须设置为我在提示词里填写的后台登录密码。
-   - ADMIN_PASSWORD 是 /admin/login 的后台登录密码。
-   - 不要把 ADMIN_PASSWORD 写入 README、前端代码、Git 提交记录或公开日志。
-   - 如果部署前还不知道正式域名，可以先用 Vercel 自动生成的域名填写 NEXT_PUBLIC_SITE_URL。
-   - 如果后面绑定了自定义域名，请更新 NEXT_PUBLIC_SITE_URL 后重新部署 Production。
-
-4. 配置 Vercel Blob
-   这个项目需要 Vercel Blob 来保存：
-   - 站点配置 config/site-config.json
-   - 上传的头像、图片模块、项目图、二维码等图片
-
-   请在 Vercel 项目的 Storage 中创建 Blob Store。
-
-   要求：
-   - Blob Store 使用 Public access，因为公开主页需要读取配置和图片。
-   - Blob Store 要连接到当前 Vercel Project。
-   - Vercel 创建并连接 Blob Store 时，通常会自动添加相关环境变量。
-   - 如果 AI/CLI 已经在当前项目目录完成 `vercel link`，优先执行：
-
-     ```bash
-     vercel blob create-store <project-name>-blob --access public --yes \
-       --environment production \
-       --environment preview \
-       --environment development
-     ```
-
-     `--yes` 会接受连接提示；显式环境参数会让 Vercel 将 `BLOB_READ_WRITE_TOKEN` 注入这三个环境。
-   - 请重点确认当前 Vercel Project 的 Production 环境变量里存在：
-
-     BLOB_READ_WRITE_TOKEN
-
-   - 不要只看到 BLOB_STORE_ID 或 BLOB_WEBHOOK_PUBLIC_KEY 就结束。
-   - 保存配置和上传图片需要 read-write token，也就是 BLOB_READ_WRITE_TOKEN。
-   - 如果 BLOB_READ_WRITE_TOKEN 已经自动存在，只需要确认即可。
-   - 如果不存在，请在 Blob Store 的 Project Connection / Settings 中，把 read-write token 添加到当前项目的环境变量里。
-
-5. 不要额外设置这些变量，除非我明确要求
-   - 不要主动设置 SESSION_SECRET。
-   - 当前项目在 SESSION_SECRET 为空时，会从后台登录凭据派生 session signing secret，适合普通 no-code 部署。
-   - 如果你确实需要设置 SESSION_SECRET，必须使用至少 32 个字符的随机字符串，并且不要显示给用户。
-
-6. 部署或重新部署 Production
-   - 完成环境变量和 Blob 设置后，触发 Production 部署或 Redeploy。
-   - 等待部署完成，并确认状态为 Ready。
-
-7. 部署后检查
-   请检查以下内容：
-   - 公开页面可以访问。
-   - /admin/login 可以打开。
-   - 可以使用我提供的 ADMIN_PASSWORD 登录后台。
-   - /admin 后台可以进入。
-   - 后台可以打开项目设置。
-   - 点击保存一次后，没有因为缺少 BLOB_READ_WRITE_TOKEN 报错。
-   - 保存后，Vercel Blob 中应该能写入站点配置。
-   - 如果可以测试上传图片，请测试一次图片上传。
-   - 如果不能测试上传图片，至少确认 /api/admin/upload 没有明显环境变量缺失问题。
-
-8. 安全提醒
-   - Vercel Blob 中的配置和上传图片是公开可读的。
-   - 不要把密钥、证件、私人笔记、未公开凭证或敏感个人数据放进站点配置。
-   - 隐藏版本只是面向不同受众展示不同内容，不是严格权限系统。
-   - 隐藏访问后缀不能当作密码使用。
-
-9. 如果遇到问题
-   - 如果是 Vercel 或 GitHub 授权问题，请告诉我需要我手动点击哪里。
-   - 如果 Vercel 不能直接导入公开 GitHub URL，请告诉我具体原因，并给出替代操作。
-   - 如果是环境变量问题，请列出缺少哪个变量，不要显示已有变量的值。
-   - 如果是 Blob 问题，请优先检查 BLOB_READ_WRITE_TOKEN 是否存在于当前 Vercel Project 的 Production 环境变量中。
-   - 如果是构建失败，请读取构建日志，指出具体报错文件、报错原因和修复建议。
-   - 不要泛泛地说“部署失败”，要给出下一步可执行操作。
-
-最终请返回：
-1. 生产环境访问链接
-2. 后台登录链接
+将 GitHub 项目 https://github.com/JiahaoTang-Alvin/bio-blocks-studio 部署到我的 Vercel。管理端密码设置为：[这里填写你想要的密码]。
+请先分析该项目的结构和技术栈，确认是否需要额外的配置（如环境变量、构建命令、输出目录等）。这个仓库内有部署流程文档及部署skills，可以尝试先安装skills作为参考。确保部署后应用可以正常访问和使用。
 ```
 
 > 不要把后台密码写进公开仓库、README、Issue、公开聊天记录或前端代码。以后想换密码，去 Vercel 后台更新 `ADMIN_PASSWORD`，然后重新部署生产环境即可。
