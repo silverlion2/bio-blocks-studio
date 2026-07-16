@@ -37,6 +37,25 @@ body {
   background-size: auto, 56px 56px, 56px 56px;
 }
 
+.public-site-shell .block-placement {
+  animation: signal-in 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.public-site-shell .block-placement:nth-child(2) { animation-delay: 70ms; }
+.public-site-shell .block-placement:nth-child(3) { animation-delay: 120ms; }
+.public-site-shell .block-placement:nth-child(4) { animation-delay: 170ms; }
+.public-site-shell .block-placement:nth-child(5) { animation-delay: 220ms; }
+.public-site-shell .block-placement:nth-child(n + 6) { animation-delay: 260ms; }
+
+@keyframes signal-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-site-shell .block-placement { animation: none; }
+}
+
 ::selection {
   background: rgba(22, 119, 255, 0.15);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, ExternalLink, ImageIcon } from "lucide-react";
+import { Download, ExternalLink, Github, ImageIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Block } from "@/types/block";
@@ -64,10 +64,11 @@ export function BlockCard({
 
   const clickable = !disableActions && block.actionType !== "none";
   const hasCover = Boolean(block.coverImage);
+  const sourceUrl = typeof block.metadata?.sourceUrl === "string" ? block.metadata.sourceUrl : "";
   const isPlainTextCard = block.metadata?.textVariant === "plain";
   const hasHoverContent = Boolean(displayBlock.subtitle?.trim() || displayBlock.description?.trim());
   const shouldRevealCoverContent = hasCover && hasHoverContent && !disableHoverReveal;
-  const showFooter = Boolean(block.badge) || block.actionType === "link" || block.actionType === "download" || block.actionType === "image-preview";
+  const showFooter = Boolean(block.badge) || Boolean(sourceUrl) || block.actionType === "link" || block.actionType === "download" || block.actionType === "image-preview";
 
   return (
     <>
@@ -125,17 +126,30 @@ export function BlockCard({
           {showFooter ? <div className="flex items-center justify-between gap-3">
             <div className="flex min-w-0 flex-wrap gap-2">
               {block.badge ? (
-                <span className="line-clamp-2 max-w-full rounded-[18px] border border-[#E5E7EB] bg-white/95 px-3 py-1.5 text-xs font-semibold leading-5 text-[#475569] shadow-soft">
+                <span className="line-clamp-2 max-w-full rounded-[18px] border border-current/15 bg-black/10 px-3 py-1.5 text-xs font-semibold leading-5 shadow-soft">
                   {block.badge}
                 </span>
               ) : (
                 <span />
               )}
             </div>
-            <div className="shrink-0">
-              {block.actionType === "link" ? <ExternalLink className="h-4 w-4 text-[#64748B]" /> : null}
-              {block.actionType === "download" ? <Download className="h-4 w-4 text-[#64748B]" /> : null}
-              {block.actionType === "image-preview" ? <ImageIcon className="h-4 w-4 text-[#64748B]" /> : null}
+            <div className="flex shrink-0 items-center gap-2">
+              {sourceUrl ? (
+                <a
+                  href={sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`View ${block.title} source on GitHub`}
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                  className="rounded-full border border-current/15 p-2 opacity-60 transition hover:opacity-100"
+                >
+                  <Github className="h-3.5 w-3.5" />
+                </a>
+              ) : null}
+              {block.actionType === "link" ? <ExternalLink className="h-4 w-4 opacity-60" /> : null}
+              {block.actionType === "download" ? <Download className="h-4 w-4 opacity-60" /> : null}
+              {block.actionType === "image-preview" ? <ImageIcon className="h-4 w-4 opacity-60" /> : null}
             </div>
           </div> : null}
         </div>
@@ -221,7 +235,6 @@ function SectionTextCard({
     >
       <h2 className={cn("font-bold leading-tight tracking-normal", sectionTitleSize[titleSize])}>
         {block.title.trim()}
-        {block.icon ? <span className="ml-1 text-[var(--site-primary)]">{block.icon}</span> : null}
       </h2>
       {subtitle ? <p className="mt-1 text-sm leading-6 text-[var(--site-muted)]">{subtitle}</p> : null}
     </article>
