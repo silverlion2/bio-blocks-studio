@@ -22,7 +22,9 @@ export async function readConfigFromBlob(): Promise<SiteConfig | null> {
 
   try {
     const meta = await head(CONFIG_PATH);
-    const response = await fetch(meta.url, { cache: "no-store" });
+    const configUrl = new URL(meta.url);
+    configUrl.searchParams.set("v", String(meta.uploadedAt.getTime()));
+    const response = await fetch(configUrl, { cache: "no-store" });
     if (!response.ok) {
       return null;
     }
