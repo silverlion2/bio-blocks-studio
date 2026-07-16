@@ -23,7 +23,7 @@ export function ProfileModuleRenderer({ module, profile }: { module: ProfileModu
         <img
           src={profile.avatarUrl || "/default-avatar.svg"}
           alt={profile.displayName}
-          className="h-32 w-32 rounded-full border border-[#EAEAEA] object-cover shadow-soft"
+          className="h-32 w-32 rounded-[28px] border border-[var(--site-border)] object-cover shadow-soft"
         />
       );
     case "name": {
@@ -36,14 +36,14 @@ export function ProfileModuleRenderer({ module, profile }: { module: ProfileModu
       );
     }
     case "headline":
-      return profile.headline.trim() ? <p className="whitespace-pre-wrap text-base font-medium text-[#333]">{profile.headline}</p> : null;
+      return profile.headline.trim() ? <p className="whitespace-pre-wrap text-base font-medium text-[var(--site-text)]">{profile.headline}</p> : null;
     case "bio":
       return profile.bio.trim() ? <p className="whitespace-pre-wrap text-sm leading-7 text-[var(--site-muted)]">{profile.bio}</p> : null;
     case "tags":
       return (
         <div className="flex flex-wrap gap-2">
           {profile.tags.map((tag) => (
-            <span key={tag} className="rounded-full bg-[#F1F5F9] px-3 py-1 text-xs font-medium text-[#475569]">
+            <span key={tag} className="rounded-full border border-[var(--site-border)] bg-[var(--site-card)] px-3 py-1 text-xs font-medium text-[var(--site-muted)]">
               {tag}
             </span>
           ))}
@@ -64,7 +64,7 @@ export function ProfileModuleRenderer({ module, profile }: { module: ProfileModu
             .sort((a, b) => a.sortOrder - b.sortOrder)
             .map((link) => {
               const className =
-                "inline-flex items-center gap-2 rounded-full border border-[#EAEAEA] bg-white px-3 py-2 text-sm font-medium text-[#333] transition hover:border-[#1677FF]/40 hover:text-[#1677FF]";
+                "inline-flex items-center gap-2 rounded-full border border-[var(--site-border)] bg-[var(--site-card)] px-3 py-2 text-sm font-medium text-[var(--site-text)] transition hover:border-[var(--site-primary)] hover:text-[var(--site-primary)]";
 
               if (link.actionType === "copy") {
                 return (

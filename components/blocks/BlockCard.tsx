@@ -85,8 +85,8 @@ export function BlockCard({
         }}
         className={cn(
           "group relative overflow-hidden rounded-[20px] border border-[var(--site-border)] p-4 shadow-soft transition",
-          "focus:outline-none focus:ring-4 focus:ring-[#1677FF]/10",
-          clickable && "cursor-pointer hover:-translate-y-0.5 hover:border-[#1677FF]/30",
+          "focus:outline-none focus:ring-4 focus:ring-[var(--site-primary)]/10",
+          clickable && "cursor-pointer hover:-translate-y-1 hover:border-[var(--site-primary)]",
           withLayout && !compact && getPublicBlockSizeClass(),
           compact && "min-h-36",
           className
@@ -221,9 +221,9 @@ function SectionTextCard({
     >
       <h2 className={cn("font-bold leading-tight tracking-normal", sectionTitleSize[titleSize])}>
         {block.title.trim()}
-        {block.icon ? <span className="ml-1 text-[#1479FF]">{block.icon}</span> : null}
+        {block.icon ? <span className="ml-1 text-[var(--site-primary)]">{block.icon}</span> : null}
       </h2>
-      {subtitle ? <p className="mt-1 text-sm leading-6 text-[#64748B]">{subtitle}</p> : null}
+      {subtitle ? <p className="mt-1 text-sm leading-6 text-[var(--site-muted)]">{subtitle}</p> : null}
     </article>
   );
 }

@@ -42,7 +42,7 @@ export function SiteLayout({ config, renderModel, languageSwitcher }: SiteLayout
           "--site-shell-max-width": `calc(320px + 3rem + ${desktopContentWidth})`
         } as React.CSSProperties
       }
-      className="min-h-screen bg-[var(--site-bg)] text-[var(--site-text)]"
+      className="public-site-shell min-h-screen bg-[var(--site-bg)] text-[var(--site-text)]"
     >
       {languageSwitcher ? (
         <PublicLanguageSwitcher
