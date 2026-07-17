@@ -56,6 +56,144 @@ body {
   .public-site-shell .block-placement { animation: none; }
 }
 
+/* Public editorial layer */
+.signal-nav {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(calc(100% - 2.5rem), 1180px);
+  margin: 0 auto;
+  padding-top: 1.25rem;
+  color: var(--site-text, #f3f7f1);
+}
+
+.public-site-shell > .signal-nav { width: min(calc(100% - 2.5rem), var(--site-shell-max-width)); }
+.signal-nav--compact { padding-bottom: 2rem; }
+.signal-nav__mark { font: 800 0.76rem/1 ui-monospace, "Cascadia Code", monospace; letter-spacing: 0.12em; }
+.signal-nav__mark span { color: var(--site-primary, #b7ff3c); }
+.signal-nav__links { display: flex; align-items: center; gap: 0.35rem; }
+.signal-nav__links a {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.55rem 0.8rem;
+  color: #98a39a;
+  font: 700 0.68rem/1 ui-monospace, "Cascadia Code", monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+.signal-nav__links a:hover { border-color: #29322b; color: #f3f7f1; }
+
+.editorial-shell {
+  --site-bg: #080b09;
+  --site-text: #f3f7f1;
+  --site-muted: #98a39a;
+  --site-border: #29322b;
+  --site-primary: #b7ff3c;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--study-accent, #b7ff3c) 8%, transparent), transparent 30rem),
+    linear-gradient(color-mix(in srgb, #29322b 42%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, #29322b 42%, transparent) 1px, transparent 1px),
+    #080b09;
+  background-size: auto, 56px 56px, 56px 56px;
+  color: #f3f7f1;
+}
+
+.case-study, .editorial-footer, .now-hero, .now-signal-grid, .now-open, .now-note {
+  width: min(calc(100% - 2.5rem), 1180px);
+  margin-inline: auto;
+}
+
+.case-study__hero { padding: 4.5rem 0 2rem; }
+.case-study__back { display: inline-flex; align-items: center; gap: 0.45rem; margin-bottom: 4rem; color: #98a39a; font-size: 0.8rem; font-weight: 700; }
+.case-study__back svg { width: 1rem; }
+.case-study__hero-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.7fr); gap: 5rem; align-items: end; }
+.signal-kicker, .signal-index { display: block; color: var(--study-accent, #b7ff3c); font: 800 0.68rem/1.2 ui-monospace, "Cascadia Code", monospace; letter-spacing: 0.18em; text-transform: uppercase; }
+.case-study h1 { margin: 1.25rem 0 0; max-width: 10ch; font-size: clamp(4.25rem, 10vw, 8.5rem); font-weight: 760; line-height: 0.83; letter-spacing: -0.075em; }
+.case-study__thesis { margin: 1.5rem 0 0; color: var(--study-accent); font-size: clamp(1.2rem, 2vw, 1.7rem); font-weight: 650; }
+.case-study__summary > p { color: #c1c9c2; font-size: clamp(1.05rem, 1.6vw, 1.35rem); line-height: 1.65; }
+.case-study__actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.6rem; }
+.signal-button { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 2.8rem; border: 1px solid #354038; border-radius: 999px; padding: 0.75rem 1rem; color: #f3f7f1; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; transition: transform 160ms ease, border-color 160ms ease; }
+.signal-button svg { width: 1rem; height: 1rem; }
+.signal-button:hover { transform: translateY(-2px); border-color: #69766d; }
+.signal-button--primary { border-color: var(--study-accent, #b7ff3c); background: var(--study-accent, #b7ff3c); color: #071006; }
+.case-study__meta { display: grid; grid-template-columns: 0.6fr 1fr 1.4fr; gap: 1rem; margin-top: 4rem; border-top: 1px solid #29322b; padding-top: 1.2rem; }
+.case-study__meta span { color: #98a39a; font: 600 0.72rem/1.6 ui-monospace, "Cascadia Code", monospace; }
+.case-study__meta b { display: block; margin-bottom: 0.2rem; color: #f3f7f1; text-transform: uppercase; }
+.case-study__visual { position: relative; aspect-ratio: 16 / 8.5; margin: 4rem 0 0; overflow: hidden; border: 1px solid #354038; border-radius: 1.5rem; background: var(--study-surface); box-shadow: 0 40px 100px rgba(0,0,0,.35); }
+.case-study__visual img { object-fit: cover; object-position: top center; }
+.case-study__section { border-top: 1px solid #29322b; padding: 7rem 0; }
+.case-study__section--split { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: clamp(3rem, 10vw, 9rem); }
+.case-study__section h2, .case-study__proof h2 { margin: 1.25rem 0 0; max-width: 12ch; font-size: clamp(2rem, 4vw, 4rem); line-height: 1.02; letter-spacing: -0.05em; }
+.case-study__prose { display: grid; gap: 1.4rem; }
+.case-study__prose p, .case-study__decision-list li { margin: 0; color: #c1c9c2; font-size: 1.08rem; line-height: 1.75; }
+.case-study__approach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2rem; }
+.case-study__approach-card { min-height: 22rem; border: 1px solid #29322b; border-radius: 1.25rem; padding: 1.5rem; background: color-mix(in srgb, var(--study-surface) 78%, #080b09); }
+.case-study__approach-card > span { color: var(--study-accent); font: 800 0.7rem/1 ui-monospace, "Cascadia Code", monospace; }
+.case-study__approach-card h3 { margin: 8rem 0 0.8rem; font-size: 1.5rem; letter-spacing: -0.03em; }
+.case-study__approach-card p { color: #98a39a; line-height: 1.65; }
+.case-study__decision-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; counter-reset: decisions; }
+.case-study__decision-list li { position: relative; border-bottom: 1px solid #29322b; padding: 0 0 1.5rem 3rem; margin-bottom: 1.5rem; counter-increment: decisions; }
+.case-study__decision-list li::before { content: "0" counter(decisions); position: absolute; left: 0; top: 0.2rem; color: var(--study-accent); font: 800 0.72rem/1 ui-monospace, "Cascadia Code", monospace; }
+.case-study__proof { margin-bottom: 7rem; border-radius: 1.5rem; padding: clamp(1.5rem, 5vw, 4rem); background: var(--study-accent); color: #071006; }
+.case-study__proof .signal-index { color: #071006; opacity: .6; }
+.case-study__proof { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+.case-study__tags { display: flex; flex-wrap: wrap; align-content: start; gap: 0.6rem; }
+.case-study__tags span { border: 1px solid rgba(7,16,6,.35); border-radius: 999px; padding: 0.7rem 0.9rem; font-size: 0.78rem; font-weight: 800; }
+.case-study__proof > p { grid-column: 2; margin: 0; line-height: 1.6; }
+
+.editorial-footer { display: flex; align-items: end; justify-content: space-between; gap: 2rem; border-top: 1px solid #29322b; padding: 5rem 0 7rem; }
+.editorial-footer h2 { margin: 1rem 0 0; max-width: 15ch; font-size: clamp(2rem, 4vw, 3.75rem); line-height: 1.02; letter-spacing: -0.05em; }
+
+.now-hero { display: grid; grid-template-columns: 1.25fr .75fr; gap: 5rem; align-items: end; padding: 7rem 0 5rem; }
+.now-hero .signal-kicker { display: flex; align-items: center; gap: .6rem; }
+.now-hero .signal-kicker i { width: .5rem; height: .5rem; border-radius: 50%; background: #b7ff3c; box-shadow: 0 0 18px #b7ff3c; animation: signal-pulse 1.8s ease-in-out infinite; }
+.now-hero h1 { margin: 1.5rem 0 0; font-size: clamp(4.2rem, 9vw, 8rem); line-height: .86; letter-spacing: -.075em; }
+.now-hero h1 em { color: #b7ff3c; font-style: normal; }
+.now-hero > p { color: #c1c9c2; font-size: 1.2rem; line-height: 1.7; }
+.now-signal-grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid #29322b; border-radius: 1.5rem; overflow: hidden; }
+.now-signal-grid article { min-height: 25rem; padding: 1.6rem; background: #0e130f; }
+.now-signal-grid article + article { border-left: 1px solid #29322b; }
+.now-signal-grid article > div { display: flex; justify-content: space-between; color: #b7ff3c; font: 800 .68rem/1 ui-monospace, "Cascadia Code", monospace; letter-spacing: .12em; }
+.now-signal-grid h2 { margin: 10rem 0 1rem; font-size: 1.75rem; letter-spacing: -.04em; }
+.now-signal-grid p { color: #98a39a; line-height: 1.65; }
+.now-open { display: grid; grid-template-columns: .55fr 1.45fr; gap: 4rem; border-top: 1px solid #29322b; margin-top: 7rem; padding: 7rem 0; }
+.now-open h2 { margin: 0; max-width: 18ch; font-size: clamp(2.2rem, 5vw, 4.6rem); line-height: 1; letter-spacing: -.06em; }
+.now-open p { max-width: 42rem; color: #98a39a; font-size: 1.05rem; line-height: 1.7; }
+.now-note { margin-bottom: 5rem; color: #667069; font: 600 .72rem/1.5 ui-monospace, "Cascadia Code", monospace; }
+.now-note a { color: #98a39a; text-decoration: underline; text-underline-offset: .2rem; }
+@keyframes signal-pulse { 50% { opacity: .45; transform: scale(.8); } }
+
+@media (max-width: 760px) {
+  .signal-nav { width: min(calc(100% - 2rem), 1180px); }
+  .public-site-shell > .signal-nav { width: min(calc(100% - 2rem), var(--site-shell-max-width)); }
+  .signal-nav__links { gap: 0; }
+  .signal-nav__links a { padding-inline: .55rem; font-size: .62rem; }
+  .case-study, .editorial-footer, .now-hero, .now-signal-grid, .now-open, .now-note { width: min(calc(100% - 2rem), 1180px); }
+  .case-study__hero { padding-top: 2.5rem; }
+  .case-study__back { margin-bottom: 3rem; }
+  .case-study__hero-grid, .case-study__section--split, .case-study__proof, .now-hero, .now-open { grid-template-columns: 1fr; gap: 2.5rem; }
+  .case-study h1 { font-size: clamp(3.7rem, 18vw, 6rem); }
+  .case-study__meta { grid-template-columns: 1fr; }
+  .case-study__visual { aspect-ratio: 4 / 3; border-radius: 1rem; }
+  .case-study__section { padding: 4.5rem 0; }
+  .case-study__approach-grid, .now-signal-grid { grid-template-columns: 1fr; }
+  .case-study__approach-card { min-height: 18rem; }
+  .case-study__approach-card h3 { margin-top: 6rem; }
+  .case-study__proof > p { grid-column: 1; }
+  .editorial-footer { align-items: start; flex-direction: column; }
+  .now-hero { padding: 4rem 0; }
+  .now-hero h1 { font-size: clamp(3.8rem, 18vw, 6rem); }
+  .now-signal-grid article + article { border-left: 0; border-top: 1px solid #29322b; }
+  .now-signal-grid article { min-height: 20rem; }
+  .now-signal-grid h2 { margin-top: 6rem; }
+  .now-open { margin-top: 5rem; padding: 5rem 0; }
+}
+
 ::selection {
   background: rgba(22, 119, 255, 0.15);
 }

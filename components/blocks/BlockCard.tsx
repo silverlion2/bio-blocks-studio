@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, ExternalLink, Github, ImageIcon } from "lucide-react";
+import { BookOpen, Download, ExternalLink, Github, ImageIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Block } from "@/types/block";
@@ -65,10 +65,11 @@ export function BlockCard({
   const clickable = !disableActions && block.actionType !== "none";
   const hasCover = Boolean(block.coverImage);
   const sourceUrl = typeof block.metadata?.sourceUrl === "string" ? block.metadata.sourceUrl : "";
+  const caseStudyUrl = typeof block.metadata?.caseStudyUrl === "string" ? block.metadata.caseStudyUrl : "";
   const isPlainTextCard = block.metadata?.textVariant === "plain";
   const hasHoverContent = Boolean(displayBlock.subtitle?.trim() || displayBlock.description?.trim());
   const shouldRevealCoverContent = hasCover && hasHoverContent && !disableHoverReveal;
-  const showFooter = Boolean(block.badge) || Boolean(sourceUrl) || block.actionType === "link" || block.actionType === "download" || block.actionType === "image-preview";
+  const showFooter = Boolean(block.badge) || Boolean(sourceUrl) || Boolean(caseStudyUrl) || block.actionType === "link" || block.actionType === "download" || block.actionType === "image-preview";
 
   return (
     <>
@@ -134,6 +135,18 @@ export function BlockCard({
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              {caseStudyUrl ? (
+                <a
+                  href={caseStudyUrl}
+                  aria-label={`Read the ${block.title} case study`}
+                  onClick={(event) => event.stopPropagation()}
+                  onKeyDown={(event) => event.stopPropagation()}
+                  className="flex items-center gap-1.5 rounded-full border border-current/15 px-2.5 py-2 text-[10px] font-bold uppercase tracking-[0.12em] opacity-70 transition hover:opacity-100"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span>Case</span>
+                </a>
+              ) : null}
               {sourceUrl ? (
                 <a
                   href={sourceUrl}

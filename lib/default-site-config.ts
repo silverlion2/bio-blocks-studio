@@ -125,6 +125,7 @@ export const defaultSiteConfig: SiteConfig = {
       metadata: {
         category: "Fintech / decision support",
         stack: ["React", "Vite", "Market data"],
+        caseStudyUrl: "/work/options-radar",
         sourceUrl: "https://github.com/silverlion2/my-trading-app"
       },
       isVisible: true,
@@ -151,6 +152,7 @@ export const defaultSiteConfig: SiteConfig = {
       metadata: {
         category: "Culture / data product",
         stack: ["Event data", "Supabase", "Static web"],
+        caseStudyUrl: "/work/shanghai-rave-index",
         sourceUrl: "https://github.com/silverlion2/shanghai-rave-calendar-2026"
       },
       isVisible: true,
@@ -207,6 +209,7 @@ export const defaultSiteConfig: SiteConfig = {
       metadata: {
         category: "AI / market intelligence",
         stack: ["React", "M&A research", "Pipeline analysis"],
+        caseStudyUrl: "/work/bioquantix",
         sourceUrl: "https://github.com/silverlion2/pharma-hunter-web"
       },
       isVisible: true,
@@ -277,8 +280,8 @@ export const defaultSiteConfig: SiteConfig = {
       coverImage: "",
       icon: "activity",
       badge: "JUL 2026",
-      href: "",
-      actionType: "none",
+      href: "/now",
+      actionType: "link",
       openInNewTab: false,
       backgroundColor: "#1A160B",
       textColor: "#FFF6D8",
