@@ -27,6 +27,28 @@ export function ProjectBlock({ block }: { block: Block }) {
     );
   }
 
+  if (block.metadata?.visualVariant === "after-hours") {
+    return (
+      <div className="grid h-full gap-5 md:grid-cols-[1.2fr_1fr] md:items-center">
+        <div>
+          <p className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[#E6A6FF]">Personal field note</p>
+          <h3 className="text-2xl font-semibold leading-tight md:text-3xl">{block.title}</h3>
+          {block.subtitle ? <p className="mt-2 text-sm font-medium opacity-70">{block.subtitle}</p> : null}
+        </div>
+        <div>
+          {block.description ? <p className="text-sm leading-6 opacity-75">{block.description}</p> : null}
+          {stack.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {stack.map((item) => (
+                <span key={item} className="rounded-full border border-current/15 px-2 py-1 text-[10px] font-semibold opacity-60">{item}</span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-2.5">
       {category ? <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-55">{category}</p> : null}

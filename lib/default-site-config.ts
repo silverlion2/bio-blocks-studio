@@ -1,7 +1,7 @@
 import type { SiteConfig } from "@/types/site-config";
 import { topLevelBlockSectionId } from "@/lib/utils";
 
-const now = "2026-07-03T00:00:00.000Z";
+const now = "2026-08-20T00:00:00.000Z";
 
 export const defaultSiteConfig: SiteConfig = {
   version: 1,
@@ -9,10 +9,10 @@ export const defaultSiteConfig: SiteConfig = {
     avatarUrl: "https://avatars.githubusercontent.com/u/10691641?v=4",
     displayName: "Silverlion",
     username: "silverlion2",
-    headline: "I build focused software for messy, high-stakes decisions.",
-    bio: "Independent builder exploring the overlap of AI, market intelligence, healthcare, and culture. I turn fragmented information into tools people can actually use.",
+    headline: "I build domain-aware AI products for complex decisions.",
+    bio: "Independent product builder focused on decision intelligence for healthcare, markets, and knowledge work. I turn fragmented evidence into focused software people can inspect and use.",
     location: "Shanghai / working worldwide",
-    tags: ["Product Strategy", "AI Systems", "Data UX", "Rapid Prototyping"],
+    tags: ["Domain-aware AI", "Decision Intelligence", "Data UX", "Product Builder"],
     email: "",
     socialLinks: [
       {
@@ -51,8 +51,8 @@ export const defaultSiteConfig: SiteConfig = {
     {
       id: "text-doing",
       sectionId: topLevelBlockSectionId,
-      title: "Selected signals",
-      subtitle: "A few products that show how I think: find the signal, compress the complexity, ship the useful part.",
+      title: "Selected work",
+      subtitle: "Professional products for research-heavy decisions where context, evidence, and uncertainty matter.",
       description: "",
       size: "section-text",
       responsiveSizes: {
@@ -69,6 +69,7 @@ export const defaultSiteConfig: SiteConfig = {
       textColor: "",
       metadata: {
         sourceSectionId: "doing",
+        sectionLabel: "Career / Core work",
         titleAlign: "left",
         titleSize: "md"
       },
@@ -81,9 +82,9 @@ export const defaultSiteConfig: SiteConfig = {
     {
       id: "builder-snapshot",
       sectionId: topLevelBlockSectionId,
-      title: "From idea to live product, across domains that rarely share a playbook.",
+      title: "From domain research to a live decision product.",
       subtitle: "",
-      description: "I research the domain, design the decision flow, build the interface, and ship the first useful version.",
+      description: "I map the evidence, design the decision flow, build the interface, and ship a testable first version.",
       size: "full-wide",
       coverImage: "",
       icon: "activity",
@@ -96,7 +97,7 @@ export const defaultSiteConfig: SiteConfig = {
       metadata: {
         visualVariant: "snapshot",
         metrics: [
-          { value: "18", label: "Public builds" },
+          { value: "19", label: "Public builds" },
           { value: "11 yrs", label: "On GitHub" },
           { value: "5+", label: "Live products" }
         ]
@@ -130,7 +131,7 @@ export const defaultSiteConfig: SiteConfig = {
       },
       isVisible: true,
       isFeatured: true,
-      sortOrder: 3,
+      sortOrder: 4,
       createdAt: now,
       updatedAt: now
     },
@@ -140,32 +141,33 @@ export const defaultSiteConfig: SiteConfig = {
       title: "Shanghai Rave Index",
       subtitle: "The underground, indexed",
       description: "A living 2026 calendar and guide for Shanghai techno, house, bass, trance, DJs, venues, tickets, and poster culture.",
-      size: "tall",
+      size: "full-wide",
       coverImage: "",
       icon: "map",
-      badge: "LIVE · CULTURE",
+      badge: "PERSONAL · LIVE",
       href: "https://raveindexsh.top/",
       actionType: "link",
       openInNewTab: true,
       backgroundColor: "#15131F",
       textColor: "#F7F2FF",
       metadata: {
-        category: "Culture / data product",
+        category: "Personal field project / culture",
         stack: ["Event data", "Supabase", "Static web"],
+        visualVariant: "after-hours",
         caseStudyUrl: "/work/shanghai-rave-index",
         sourceUrl: "https://github.com/silverlion2/shanghai-rave-calendar-2026"
       },
       isVisible: true,
       isFeatured: false,
-      sortOrder: 4,
+      sortOrder: 11,
       createdAt: now,
       updatedAt: now
     },
     {
       id: "text-daily",
       sectionId: topLevelBlockSectionId,
-      title: "More from the lab",
-      subtitle: "Tools for specialized decisions, creative workflows, and intelligent systems.",
+      title: "Open lab",
+      subtitle: "Career-relevant prototypes, reusable systems, and experiments in applied AI.",
       description: "",
       size: "section-text",
       responsiveSizes: {
@@ -182,6 +184,7 @@ export const defaultSiteConfig: SiteConfig = {
       textColor: "",
       metadata: {
         sourceSectionId: "daily",
+        sectionLabel: "Career / Experiments",
         titleAlign: "left",
         titleSize: "md"
       },
@@ -213,8 +216,8 @@ export const defaultSiteConfig: SiteConfig = {
         sourceUrl: "https://github.com/silverlion2/pharma-hunter-web"
       },
       isVisible: true,
-      isFeatured: false,
-      sortOrder: 6,
+      isFeatured: true,
+      sortOrder: 3,
       createdAt: now,
       updatedAt: now
     },
@@ -240,7 +243,7 @@ export const defaultSiteConfig: SiteConfig = {
       },
       isVisible: true,
       isFeatured: false,
-      sortOrder: 7,
+      sortOrder: 6,
       createdAt: now,
       updatedAt: now
     },
@@ -266,7 +269,7 @@ export const defaultSiteConfig: SiteConfig = {
       },
       isVisible: true,
       isFeatured: false,
-      sortOrder: 8,
+      sortOrder: 7,
       createdAt: now,
       updatedAt: now
     },
@@ -279,7 +282,7 @@ export const defaultSiteConfig: SiteConfig = {
       size: "tall",
       coverImage: "",
       icon: "activity",
-      badge: "JUL 2026",
+      badge: "AUG 2026",
       href: "/now",
       actionType: "link",
       openInNewTab: false,
@@ -290,15 +293,15 @@ export const defaultSiteConfig: SiteConfig = {
       },
       isVisible: true,
       isFeatured: false,
-      sortOrder: 9,
+      sortOrder: 8,
       createdAt: now,
       updatedAt: now
     },
     {
       id: "text-social",
       sectionId: topLevelBlockSectionId,
-      title: "Open source trail",
-      subtitle: "Code, experiments, and the systems behind the work.",
+      title: "After hours",
+      subtitle: "Personal projects shaped by music, city life, and the communities I care about.",
       description: "",
       size: "section-text",
       responsiveSizes: {
@@ -315,6 +318,7 @@ export const defaultSiteConfig: SiteConfig = {
       textColor: "",
       metadata: {
         sourceSectionId: "social",
+        sectionLabel: "Personal / Off the clock",
         titleAlign: "left",
         titleSize: "md"
       },
@@ -328,7 +332,7 @@ export const defaultSiteConfig: SiteConfig = {
       id: "github",
       sectionId: topLevelBlockSectionId,
       title: "GitHub",
-      subtitle: "18 public repositories",
+      subtitle: "19 public repositories",
       description: "Browse the full archive, source code, and works in progress.",
       size: "small-square",
       coverImage: "",
@@ -344,7 +348,7 @@ export const defaultSiteConfig: SiteConfig = {
       },
       isVisible: true,
       isFeatured: false,
-      sortOrder: 11,
+      sortOrder: 9,
       createdAt: now,
       updatedAt: now
     }
@@ -363,10 +367,10 @@ export const defaultSiteConfig: SiteConfig = {
   settings: {
     projectName: "Silverlion Signal Studio",
     siteTitle: "Silverlion — Independent Builder",
-    siteDescription: "Independent builder in Shanghai creating focused software for messy, high-stakes decisions across AI, markets, healthcare, and culture.",
+    siteDescription: "Independent product builder in Shanghai creating domain-aware AI and decision-intelligence software for healthcare, markets, and knowledge work.",
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-    seoTitle: "Silverlion - Independent Builder of AI & Data Products",
-    seoDescription: "Live products and open experiments by Silverlion across AI systems, market intelligence, healthcare, and culture.",
+    seoTitle: "Silverlion — Domain-Aware AI Product Builder",
+    seoDescription: "Decision-intelligence products and applied AI experiments by Silverlion across healthcare, markets, and knowledge work.",
     seoCanonicalUrl: "",
     seoOgImage: "",
     enableImagePreview: true,

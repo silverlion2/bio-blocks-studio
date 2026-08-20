@@ -235,6 +235,7 @@ function SectionTextCard({
   const titleSize = rawTitleSize === "sm" || rawTitleSize === "lg" ? rawTitleSize : "md";
   const titleAlign = rawTitleAlign === "center" || rawTitleAlign === "right" ? rawTitleAlign : "left";
   const subtitle = block.subtitle || block.description;
+  const sectionLabel = typeof block.metadata?.sectionLabel === "string" ? block.metadata.sectionLabel : "";
 
   return (
     <article
@@ -246,6 +247,11 @@ function SectionTextCard({
         className
       )}
     >
+      {sectionLabel ? (
+        <p className="mb-2 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--site-primary)]">
+          {sectionLabel}
+        </p>
+      ) : null}
       <h2 className={cn("font-bold leading-tight tracking-normal", sectionTitleSize[titleSize])}>
         {block.title.trim()}
       </h2>

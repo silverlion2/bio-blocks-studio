@@ -61,11 +61,11 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     slug: "shanghai-rave-index",
-    eyebrow: "Culture / data product",
+    eyebrow: "After hours / personal field project",
     title: "Shanghai Rave Index",
     thesis: "The underground, indexed.",
     summary:
-      "A living calendar and field guide for Shanghai techno, house, bass, trance, DJs, venues, tickets, and poster culture.",
+      "A personal cultural project: a living calendar and field guide for Shanghai techno, house, bass, trance, DJs, venues, tickets, and poster culture.",
     status: "Live and evolving",
     accent: "#E6A6FF",
     surface: "#15131F",
@@ -96,7 +96,7 @@ export const caseStudies: CaseStudy[] = [
       "High-contrast poster-forward presentation to retain the identity of each event.",
       "A lightweight publishing system that can evolve with the scene and its irregular source material."
     ],
-    demonstrates: ["Messy-data structuring", "Cultural product design", "Information architecture", "Editorial systems"],
+    demonstrates: ["Curiosity beyond work", "Messy-data structuring", "Cultural product design", "Editorial systems"],
     nextSignal: "Deepen venue and artist histories so one night of discovery becomes a durable cultural archive."
   },
   {
