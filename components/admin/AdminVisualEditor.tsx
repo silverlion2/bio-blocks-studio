@@ -56,11 +56,19 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Block, BlockSize, LayoutDevice } from "@/types/block";
 import type { Profile, SocialLink } from "@/types/profile";
 import type { Section } from "@/types/section";
 import type { SiteConfig, SiteLanguage } from "@/types/site-config";
+import {
+  type AdminDraftEnvelope,
+  adminDraftStorageKey,
+  parseAdminDraft,
+  restoreAdminDraftConfig,
+  serializeAdminDraft
+} from "@/lib/admin-draft";
 import { validateSiteConfig } from "@/lib/validators";
 import {
   bySortOrder,
@@ -120,6 +128,13 @@ type ModalState =
   | null;
 
 type ProjectSettingsPanel = "basic" | "web" | "seo" | "audiences" | "appearance" | "config";
+
+type DraftRecoveryState =
+  | { status: "checking" }
+  | { status: "none" }
+  | { status: "available"; draft: AdminDraftEnvelope }
+  | { status: "current"; savedAt: string }
+  | { status: "invalid"; detail?: string };
 
 const languageOptions: { code: string; label: string; defaultNote: string }[] = [
   { code: "zh-CN", label: "简体中文", defaultNote: "中文" },
@@ -333,7 +348,13 @@ type EditorContentItem =
   | { id: string; type: "top-level-blocks"; blocks: Block[]; sortOrder: number }
   | { id: string; type: "text-block"; block: Block; sortOrder: number };
 
-export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig }) {
+export function AdminVisualEditor({
+  initialConfig,
+  remotePersistenceAvailable
+}: {
+  initialConfig: SiteConfig;
+  remotePersistenceAvailable: boolean;
+}) {
   const [baseConfig, setBaseConfig] = useState(() => normalizeContentFlowConfig(initialConfig));
   const [editorLanguage, setEditorLanguage] = useState<EditorLanguage>(() => resolveInitialEditorLanguage());
   const [activeVariantId, setActiveVariantId] = useState(() => getMainVariantId(initialConfig));
@@ -344,6 +365,9 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
   );
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [draftRecovery, setDraftRecovery] = useState<DraftRecoveryState>({ status: "checking" });
+  const [localDraftWriteError, setLocalDraftWriteError] = useState("");
+  const [remoteSaveError, setRemoteSaveError] = useState("");
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [resizePreviewSize, setResizePreviewSize] = useState<BlockSize | null>(null);
   const [resizeDrafts, setResizeDrafts] = useState<Record<string, BlockResizeDraft>>({});
@@ -500,6 +524,53 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
     window.localStorage.setItem(editorLanguageStorageKey, editorLanguage);
   }, [editorLanguage]);
 
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const result = parseAdminDraft(window.localStorage.getItem(adminDraftStorageKey), validateSiteConfig);
+        if (result.status === "ready") {
+          setDraftRecovery({ status: "available", draft: result.draft });
+        } else if (result.status === "invalid") {
+          setDraftRecovery({ status: "invalid", detail: result.detail });
+        } else {
+          setDraftRecovery({ status: "none" });
+        }
+      } catch {
+        setDraftRecovery({ status: "invalid" });
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    if (draftRecovery.status === "available") return;
+    const frame = window.requestAnimationFrame(() => {
+      if (!validation.success) {
+        setLocalDraftWriteError(
+          editorLanguage === "zh-CN"
+            ? "当前内容未通过校验；请修正标红字段后再生成可恢复草稿。"
+            : "The current content is invalid. Fix the highlighted fields before a recoverable draft can be updated."
+        );
+        return;
+      }
+
+      const savedAt = new Date().toISOString();
+      try {
+        window.localStorage.setItem(adminDraftStorageKey, serializeAdminDraft(validation.data, savedAt));
+        setLocalDraftWriteError("");
+        setDraftRecovery({ status: "current", savedAt });
+      } catch {
+        setLocalDraftWriteError(
+          editorLanguage === "zh-CN"
+            ? "浏览器无法保存本地草稿。请立即导出备份，并保持此页面打开。"
+            : "This browser could not save the local draft. Export a backup now and keep this page open."
+        );
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [baseConfig, draftRecovery.status, editorLanguage, isDirty, validation]);
+
   function changeEditorLanguage(value: string) {
     if (!isEditorLanguage(value)) return;
     setEditorLanguage(value);
@@ -596,22 +667,40 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
       contentVariants: {},
       updatedAt: new Date().toISOString()
     };
-    const blob = new Blob([JSON.stringify(scopedConfig, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
     const activeVariant = enabledVariants.find((variant) => variant.id === resolvedActiveVariantId);
     const activeLanguage = availableLanguages.find((language) => language.code === resolvedActiveLocale);
-    const safeName = [baseConfig.settings.projectName || "site-config", activeVariant?.name || resolvedActiveVariantId, activeLanguage?.label || resolvedActiveLocale]
-      .join("-")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-    link.href = url;
-    link.download = `${safeName || "site-config"}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    downloadConfigFile(scopedConfig, [
+      baseConfig.settings.projectName || "site-config",
+      activeVariant?.name || resolvedActiveVariantId,
+      activeLanguage?.label || resolvedActiveLocale
+    ]);
+  }
+
+  function restoreLocalDraft() {
+    if (draftRecovery.status !== "available") return;
+    setBaseConfig(normalizeContentFlowConfig(restoreAdminDraftConfig(draftRecovery.draft.config, baseConfig)));
+    setIsDirty(true);
+    setRemoteSaveError("");
+    setDraftRecovery({ status: "current", savedAt: draftRecovery.draft.savedAt });
+  }
+
+  function discardLocalDraft() {
+    try {
+      window.localStorage.removeItem(adminDraftStorageKey);
+      setDraftRecovery({ status: "none" });
+      setLocalDraftWriteError("");
+    } catch {
+      setLocalDraftWriteError(
+        editorLanguage === "zh-CN"
+          ? "浏览器无法删除本地草稿。"
+          : "This browser could not remove the local draft."
+      );
+    }
+  }
+
+  function exportRecoveryBackup() {
+    const recoveryConfig = draftRecovery.status === "available" ? draftRecovery.draft.config : baseConfig;
+    downloadConfigFile(recoveryConfig, [recoveryConfig.settings.projectName || "site-config", "recovery-backup"]);
   }
 
   async function importConfig(file: File) {
@@ -1185,38 +1274,74 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
     dragPreviewSyncFrameRef.current = null;
   }
 
-  async function save() {
+  async function save(): Promise<boolean> {
+    if (draftRecovery.status === "available") {
+      toast.error(copy.saveFailed, {
+        description:
+          editorLanguage === "zh-CN"
+            ? "请先恢复或放弃检测到的浏览器草稿。"
+            : "Restore or discard the detected browser draft before saving."
+      });
+      return false;
+    }
+
     const result = validateSiteConfig(baseConfig);
     if (!result.success) {
       toast.error(copy.saveFailed, { description: result.error });
-      return;
+      return false;
     }
 
     setIsSaving(true);
-    const response = await fetch("/api/admin/config", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(result.data)
-    });
-    const body = (await response.json().catch(() => null)) as { error?: string; updatedAt?: string } | null;
-    setIsSaving(false);
+    setRemoteSaveError("");
+    try {
+      const response = await fetch("/api/admin/config", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(result.data)
+      });
+      const body = (await response.json().catch(() => null)) as { error?: string; updatedAt?: string } | null;
 
-    if (!response.ok) {
-      toast.error(copy.saveFailed, { description: body?.error ?? "Unknown error" });
-      return;
+      if (!response.ok) {
+        const message = body?.error ?? "Unknown error";
+        setRemoteSaveError(message);
+        toast.error(copy.saveFailed, { description: message });
+        return false;
+      }
+
+      setBaseConfig((current) => ({ ...current, updatedAt: body?.updatedAt ?? new Date().toISOString() }));
+      setIsDirty(false);
+      try {
+        window.localStorage.removeItem(adminDraftStorageKey);
+        setDraftRecovery({ status: "none" });
+        setLocalDraftWriteError("");
+      } catch {
+        setLocalDraftWriteError(
+          editorLanguage === "zh-CN"
+            ? "远端已保存，但浏览器无法清除旧草稿。请手动放弃本地草稿。"
+            : "Remote save succeeded, but the browser could not clear the old draft. Discard it manually."
+        );
+      }
+      toast.success(copy.saveSuccess);
+      return true;
+    } catch {
+      const message =
+        editorLanguage === "zh-CN"
+          ? "无法连接保存服务。本地草稿仍保留在此浏览器。"
+          : "The save service could not be reached. The local draft remains in this browser.";
+      setRemoteSaveError(message);
+      toast.error(copy.saveFailed, { description: message });
+      return false;
+    } finally {
+      setIsSaving(false);
     }
-
-    setBaseConfig((current) => ({ ...current, updatedAt: body?.updatedAt ?? new Date().toISOString() }));
-    setIsDirty(false);
-    toast.success(copy.saveSuccess);
   }
 
   return (
     <main className="min-h-screen bg-white text-[#101010]">
       <header className="sticky top-0 z-40 border-b border-[#EAF0F8] bg-white">
-        <div className="mx-auto grid max-w-[1180px] gap-2 px-5 py-3 md:flex md:items-center md:justify-between">
-          <div className="flex items-center justify-between gap-3 md:contents">
-            <div className="flex min-w-0 items-center gap-3 md:order-1">
+        <div className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)] gap-2 px-5 py-3 md:flex md:items-center md:justify-between">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 md:contents">
+            <div className="flex min-w-0 flex-1 items-center gap-3 md:order-1 md:flex-none">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{baseConfig.settings.projectName}</p>
                 <p className="text-xs text-[#6B7280]">{isDirty ? copy.unsaved : copy.saved}</p>
@@ -1225,12 +1350,12 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
                 {copy.editorVersion} v{adminEditorVersion}
               </span>
             </div>
-            <div className="flex items-center justify-end gap-2 md:order-3">
-              <Button variant="secondary" size="sm" onClick={() => setModal({ type: "project-settings" })}>
+            <div className="flex shrink-0 items-center justify-end gap-2 md:order-3">
+              <Button className="min-h-11" variant="secondary" size="sm" onClick={() => setModal({ type: "project-settings" })}>
                 <Settings className="h-4 w-4" />
                 {copy.projectSettings}
               </Button>
-              <Button size="sm" onClick={save} disabled={isSaving || !validation.success}>
+              <Button className="min-h-11" size="sm" onClick={save} disabled={isSaving || !validation.success || draftRecovery.status === "available"}>
                 <Save className="h-4 w-4" />
                 {isSaving ? copy.saving : copy.save}
               </Button>
@@ -1279,6 +1404,18 @@ export function AdminVisualEditor({ initialConfig }: { initialConfig: SiteConfig
           </div>
         </div>
       </header>
+
+      <AdminRecoveryBanner
+        state={draftRecovery}
+        isDirty={isDirty}
+        remotePersistenceAvailable={remotePersistenceAvailable}
+        localDraftWriteError={localDraftWriteError}
+        remoteSaveError={remoteSaveError}
+        editorLanguage={editorLanguage}
+        onRestore={restoreLocalDraft}
+        onExport={exportRecoveryBackup}
+        onDiscard={discardLocalDraft}
+      />
 
       {hasMounted ? (
         <>
@@ -3645,6 +3782,118 @@ function getPresetFromDraft({
   return "full-wide";
 }
 
+function AdminRecoveryBanner({
+  state,
+  isDirty,
+  remotePersistenceAvailable,
+  localDraftWriteError,
+  remoteSaveError,
+  editorLanguage,
+  onRestore,
+  onExport,
+  onDiscard
+}: {
+  state: DraftRecoveryState;
+  isDirty: boolean;
+  remotePersistenceAvailable: boolean;
+  localDraftWriteError: string;
+  remoteSaveError: string;
+  editorLanguage: EditorLanguage;
+  onRestore: () => void;
+  onExport: () => void;
+  onDiscard: () => void;
+}) {
+  const isChinese = editorLanguage === "zh-CN";
+  const hasError = Boolean(localDraftWriteError || remoteSaveError || state.status === "invalid");
+  const isAvailable = state.status === "available";
+  const isCurrentDraft = state.status === "current" && isDirty;
+
+  if (state.status === "none" && remotePersistenceAvailable && !isDirty && !hasError) return null;
+
+  let title = isChinese ? "正在检查浏览器草稿…" : "Checking browser recovery…";
+  let description = isChinese ? "请稍候。" : "One moment.";
+
+  if (state.status === "invalid") {
+    title = isChinese ? "发现无法读取的本地草稿" : "An unreadable local draft was found";
+    description = isChinese
+      ? "为保护线上内容，这份草稿不会被恢复。你可以删除它后继续。"
+      : "It will not be restored, protecting the live content. You can discard it and continue.";
+  } else if (localDraftWriteError) {
+    title = isChinese ? "本地草稿未能更新" : "The local draft could not be updated";
+    description = localDraftWriteError;
+  } else if (remoteSaveError) {
+    title = isChinese ? "远端保存失败；本地草稿仍保留" : "Remote save failed; the local draft is retained";
+    description = remoteSaveError;
+  } else if (isAvailable) {
+    title = isChinese ? "找到一份未发布的浏览器草稿" : "An unpublished browser draft is available";
+    description = isChinese
+      ? `保存于 ${formatDraftTime(state.draft.savedAt, editorLanguage)}。恢复前不会覆盖当前加载的内容。`
+      : `Saved ${formatDraftTime(state.draft.savedAt, editorLanguage)}. It will not replace the loaded content until you restore it.`;
+  } else if (!remotePersistenceAvailable) {
+    title = isChinese ? "远端保存未配置" : "Remote saving is not configured";
+    description = isChinese
+      ? isCurrentDraft
+        ? "修改已备份在此浏览器，但尚未发布。配置 BLOB_READ_WRITE_TOKEN 并重启后才能远端保存。"
+        : "你仍可预览和编辑；修改会保存在此浏览器，但不会发布。请配置 BLOB_READ_WRITE_TOKEN 后再保存。"
+      : isCurrentDraft
+        ? "Changes are backed up in this browser but are not published. Configure BLOB_READ_WRITE_TOKEN and restart before remote saving."
+        : "You can still preview and edit. Changes stay in this browser and are not published until BLOB_READ_WRITE_TOKEN is configured.";
+  } else if (isCurrentDraft || isDirty) {
+    title = isChinese ? "草稿已备份在此浏览器" : "Draft backed up in this browser";
+    description = isChinese
+      ? "这份修改尚未发布；远端保存成功后才会清除本地草稿。"
+      : "These changes are not published. The local draft clears only after remote save succeeds.";
+  }
+
+  const showExport = isAvailable || isDirty;
+  const showDiscard = isAvailable || state.status === "invalid";
+
+  return (
+    <section
+      role={hasError ? "alert" : "status"}
+      className={cn(
+        "sticky top-[73px] z-[35] border-b px-5 py-3 md:top-[65px]",
+        hasError ? "border-red-200 bg-red-50 text-red-950" : "border-amber-200 bg-amber-50 text-amber-950"
+      )}
+    >
+      <div className="mx-auto flex max-w-[1180px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="mt-0.5 text-xs leading-5 opacity-75">{description}</p>
+        </div>
+        {isAvailable || showExport || showDiscard ? (
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {isAvailable ? (
+              <Button type="button" size="sm" onClick={onRestore} className="min-h-11">
+                {isChinese ? "恢复草稿" : "Restore Draft"}
+              </Button>
+            ) : null}
+            {showExport ? (
+              <Button type="button" variant="secondary" size="sm" onClick={onExport} className="min-h-11">
+                <Download className="h-4 w-4" />
+                {isChinese ? "导出恢复备份" : "Export Backup"}
+              </Button>
+            ) : null}
+            {showDiscard ? (
+              <Button type="button" variant="ghost" size="sm" onClick={onDiscard} className="min-h-11">
+                {isChinese ? "放弃本地草稿" : "Discard Local Draft"}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function formatDraftTime(value: string, editorLanguage: EditorLanguage) {
+  try {
+    return new Intl.DateTimeFormat(editorLanguage, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
@@ -3734,7 +3983,7 @@ function EditorModal({
   title: string;
   children: React.ReactNode;
   onClose: () => void;
-  onSave: () => Promise<void>;
+  onSave: () => Promise<boolean>;
   isSaving: boolean;
   editorLanguage: EditorLanguage;
   canSave?: boolean;
@@ -3765,8 +4014,8 @@ function EditorModal({
             <Button variant="ghost" onClick={onClose} className={cn(isDark && "text-white hover:bg-white/10")}>{copy.cancel}</Button>
             <Button
               onClick={async () => {
-                await onSave();
-                onClose();
+                const didSave = await onSave();
+                if (didSave) onClose();
               }}
               disabled={isSaving || !canSave}
               className={cn(isDark ? "rounded-full bg-white text-black hover:bg-white/90" : "bg-black hover:bg-black/90")}
@@ -4099,6 +4348,7 @@ function ProjectSettingsForm({
   editorLanguage: EditorLanguage;
   onEditorLanguageChange: (language: string) => void;
 }) {
+  const router = useRouter();
   const copy = editorCopy[editorLanguage];
   const theme = contentConfig.theme;
   const settings = config.settings;
@@ -4128,7 +4378,8 @@ function ProjectSettingsForm({
       toast.error("退出登录失败");
       return;
     }
-    window.location.href = "/admin/login";
+    router.push("/admin/login");
+    router.refresh();
   }
 
   function updateVariant(id: string, patch: Partial<SiteConfig["settings"]["variants"]["variants"][number]>) {
@@ -4829,6 +5080,23 @@ function ProjectSettingsForm({
 
 function normalizeBlocks(blocks: Block[]) {
   return blocks.map((block) => ({ ...block, sectionId: topLevelBlockSectionId }));
+}
+
+function downloadConfigFile(config: SiteConfig, nameParts: string[]) {
+  const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const safeName = nameParts
+    .join("-")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  link.href = url;
+  link.download = `${safeName || "site-config"}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function renameVariantContentKeys(contentVariants: SiteConfig["contentVariants"], oldVariantId: string, nextVariantId: string) {

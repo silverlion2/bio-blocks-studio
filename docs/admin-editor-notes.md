@@ -196,6 +196,15 @@ Regression checks after touching drag logic:
 - Social links can either navigate or copy content.
 - Main file: `components/site/ProfileModuleRenderer.tsx`.
 
+## Draft recovery and persistence state
+
+- Valid dirty edits are stored under the versioned `bio-blocks-studio:admin-draft:v1` browser key after mount.
+- Automatic drafts redact every variant `accessCode`; restore keeps the access codes from the currently loaded server config and leaves new draft-only variants blank.
+- A detected draft is validated before it can enter editor state. Save remains disabled until the user restores or discards it.
+- Missing Blob configuration, local-storage failure, and remote-save failure are persistent inline states rather than toast-only feedback.
+- Modal save closes only after the authenticated config endpoint returns success. A successful remote save is the only automatic path that clears the draft.
+- Recovery controls use native buttons, 44px minimum targets, wrapping action rows, and keyboard activation at mobile width.
+
 ## Validation and deploy
 
 - Standard checks after editor changes:

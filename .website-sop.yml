@@ -1,0 +1,36 @@
+version: 1
+project:
+  name: bio-blocks-studio
+  profile: next
+  packageManager: npm
+  workspaceKind: single
+  sourceRoots:
+    - app
+    - components
+    - lib
+commands:
+  install: npm ci
+  dev: npm run dev
+  lint: npm run lint
+  typecheck: npm run typecheck
+  test: npm test
+  build: npm run build
+  e2e: null
+  audit: npm audit --audit-level=moderate --registry=https://registry.npmjs.org
+  verify: npm run verify
+quality:
+  enforcement: hard
+  requiredDocs:
+    - docs/product-spec.md
+    - docs/architecture.md
+    - docs/design-system.md
+    - docs/test-matrix.md
+  requiredStates:
+    - loading
+    - empty
+    - error
+    - partial
+    - success
+release:
+  requireProductionSmokeTest: true
+  requireRollbackEvidence: true

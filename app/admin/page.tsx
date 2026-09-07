@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { getCurrentSessionIsValid } from "@/lib/auth";
+import { isRemotePersistenceConfigured } from "@/lib/blob-config";
 import { getSiteConfig } from "@/lib/site-config";
 
 export const dynamic = "force-dynamic";
@@ -14,5 +15,5 @@ export default async function AdminPage() {
   }
 
   const config = await getSiteConfig((await headers()).get("accept-language"));
-  return <AdminShell initialConfig={config} />;
+  return <AdminShell initialConfig={config} remotePersistenceAvailable={isRemotePersistenceConfigured()} />;
 }

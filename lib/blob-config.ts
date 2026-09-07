@@ -11,12 +11,12 @@ export class BlobTokenMissingError extends Error {
   }
 }
 
-function hasBlobToken() {
+export function isRemotePersistenceConfigured() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
 export async function readConfigFromBlob(): Promise<SiteConfig | null> {
-  if (!hasBlobToken()) {
+  if (!isRemotePersistenceConfigured()) {
     return null;
   }
 
@@ -38,7 +38,7 @@ export async function readConfigFromBlob(): Promise<SiteConfig | null> {
 }
 
 export async function writeConfigToBlob(config: SiteConfig): Promise<void> {
-  if (!hasBlobToken()) {
+  if (!isRemotePersistenceConfigured()) {
     throw new BlobTokenMissingError();
   }
 

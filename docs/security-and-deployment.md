@@ -74,6 +74,8 @@ The config file is public-readable through its Blob URL, so do not store secrets
 
 The admin editor can export and import scoped JSON from **项目设置**. The config section shows the active version/language badges; export serializes the current materialized scope, and import validates the JSON before writing its content snapshot into that same current scope. The imported content is written to Vercel Blob only after the admin clicks save.
 
+Valid unpublished edits are also backed up in browser-local storage for reload recovery. This automatic draft is versioned, validated before restore, and never treated as published state. Variant access codes are redacted before storage; restore retains only the codes from the currently loaded server config. The complete JSON export remains an explicit user-triggered download and should be handled as public site configuration.
+
 Current editable project settings include:
 
 - `settings.projectName`: admin top bar and login page name.

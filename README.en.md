@@ -67,6 +67,9 @@ The page structure is simple:
 * **Config import and export**
   Export the full `SiteConfig` JSON for backup, migration, or reuse.
 
+* **Browser draft recovery**
+  Valid unpublished edits are backed up in the current browser. After a reload, restore, export, or discard the draft; failed remote saves keep both the modal and draft intact. Automatic drafts never persist variant access codes.
+
 * **No traditional database**
   Production config and uploaded assets are stored in Vercel Blob, making the project lightweight and easy to deploy.
 
@@ -740,6 +743,8 @@ You can use it to:
 * Quickly duplicate a homepage template for another person
 
 Importing JSON only replaces the current editing draft. It will not write to Vercel Blob until you review the content and click Save.
+
+If Blob is unavailable or a remote save fails, the admin shows an explicit unpublished state and keeps a browser-local draft. After reload, you must restore or discard that draft before saving. Recovery uses the same `SiteConfig` validation, strips variant access codes from automatic storage, and retains the access codes from the currently loaded server config during restore.
 
 ---
 
