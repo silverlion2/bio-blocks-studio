@@ -1,6 +1,10 @@
 # Security and Deployment Notes
 
-Last updated: 2026-07-07
+Last updated: 2026-09-15
+
+## Local E2E security boundary
+
+`npm run test:e2e:prod` starts a production build only on an exclusive loopback port, with a disposable test password/session secret and an explicitly empty Blob token. It rejects a pre-existing server and verifies cleanup. No successful Blob write/upload or deployed smoke test is claimed. GitHub Actions runs this local gate on PR/main without repository write permissions.
 
 ## Security Boundary
 

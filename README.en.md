@@ -65,10 +65,13 @@ The page structure is simple:
   Manage public site title, description, site URL, SEO metadata, theme, appearance, languages, and versions from the admin panel.
 
 * **Config import and export**
-  Export the full `SiteConfig` JSON for backup, migration, or reuse.
+  Export the selected version/language scope; validated import replaces only that scope and does not publish automatically. Browser recovery offers a separate full draft backup.
 
 * **Browser draft recovery**
   Valid unpublished edits are backed up in the current browser. After a reload, restore, export, or discard the draft; failed remote saves keep both the modal and draft intact. Automatic drafts never persist variant access codes.
+
+* **Repeatable admin browser gate**
+  `npm run test:e2e:prod` builds and runs Playwright against an exclusive local production server with disposable credentials and no Blob token. It covers login, scoped editing/import/export, failed save/recovery, unauthenticated 401s, keyboard navigation, and 390px/desktop 44px controls. GitHub Actions runs the same cloud-write-free gate on main and PRs.
 
 * **No traditional database**
   Production config and uploaded assets are stored in Vercel Blob, making the project lightweight and easy to deploy.

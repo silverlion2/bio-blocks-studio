@@ -1,6 +1,10 @@
 # Product Specification
 
-Last updated: 2026-09-08
+Last updated: 2026-09-15
+
+## Current milestone: repeatable admin-editor browser gate
+
+The owner needs the already-shipped local draft recovery and scoped editing path to be verifiable after every code change, without a production account or Blob resource. The narrow release is a repository-owned Playwright Chromium suite against `next build` + `next start`: local test login, missing-Blob guidance, version/language scope isolation, failed-save and reload recovery, config import/export boundaries, unauthenticated 401s, and responsive keyboard/touch-target checks. It makes no cloud write and does not prove actual Blob persistence, cross-browser behavior, drag-and-drop, or deployment health. Success means all tests fail loudly on a regression and the official build/audit/SOP gates remain green. Stop if a test must use production credentials, an existing server, a real Blob token, or a skipped assertion to pass.
 
 ## Current milestone: trustworthy local draft recovery
 

@@ -15,7 +15,7 @@ commands:
   typecheck: npm run typecheck
   test: npm test
   build: npm run build
-  e2e: null
+  e2e: npm run test:e2e
   audit: npm audit --audit-level=moderate --registry=https://registry.npmjs.org
   verify: npm run verify
 quality:

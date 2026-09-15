@@ -1,6 +1,10 @@
 # Design and State Contract
 
-Last updated: 2026-09-08
+Last updated: 2026-09-15
+
+## Browser gate for interaction states
+
+Production-build checks observe loading/checking recovery, empty/no draft, partial local-only draft, error/missing-Blob save and invalid import, and successful local restore/import. At 390px and desktop width the recovery actions must be visible in real Tab order (including reverse Tab), Enter-activatable, at least 44px wide and high, and the document must not overflow horizontally. This gate does not establish full WCAG conformance, color contrast, visual pixel parity, or all editor icon controls; retain manual design review for those surfaces.
 
 ## Recovery status hierarchy
 

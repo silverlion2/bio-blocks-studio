@@ -198,6 +198,8 @@ Regression checks after touching drag logic:
 
 ## Draft recovery and persistence state
 
+- Automated critical-path evidence lives in `tests/e2e/admin-editor.spec.ts`; `npm run test:e2e:prod` builds first and runs against a local production server with no Blob token. The runner owns the server lifecycle and fails if the test port is occupied or cannot be released.
+
 - Valid dirty edits are stored under the versioned `bio-blocks-studio:admin-draft:v1` browser key after mount.
 - Automatic drafts redact every variant `accessCode`; restore keeps the access codes from the currently loaded server config and leaves new draft-only variants blank.
 - A detected draft is validated before it can enter editor state. Save remains disabled until the user restores or discards it.

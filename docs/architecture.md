@@ -1,6 +1,10 @@
 # Architecture
 
-Last updated: 2026-09-08
+Last updated: 2026-09-15
+
+## Local production-build E2E boundary
+
+`scripts/run-admin-e2e.mjs` starts `next start` on an exclusive loopback port after a build, runs the Playwright config/specs, stops its owned child, and fails if the port remains occupied. This explicit lifecycle avoids a Windows Playwright webServer shell-teardown hang. The child server overrides admin password/hash, session secret, Blob token, and Vercel environment with disposable local values; no already-running server is reused. Each Playwright test gets an isolated browser context, and upload/config 401 requests use an unauthenticated request fixture. The suite exercises the real UI and API validation flow but cannot perform a successful Blob write. Downloaded JSON is inspected in test-local output; malformed/invalid/valid imports remain in browser state and do not call remote PUT. Failure artifacts are ignored in `output/playwright/`. Rollback removes the dev-only runner, specs, scripts, and SOP `e2e` command; application runtime behavior is unchanged.
 
 ## System boundary
 
