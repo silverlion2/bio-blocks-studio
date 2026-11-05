@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --no-warnings --experimental-strip-types --test tests/admin-draft.test.ts",
+    "test": "node --no-warnings --experimental-strip-types --test tests/admin-draft.test.ts tests/*.test.mjs",
     "test:e2e": "node scripts/run-admin-e2e.mjs",
     "test:e2e:prod": "npm run build && npm run test:e2e",
     "verify": "npm run test && npm run lint && npm run typecheck && npm run build"

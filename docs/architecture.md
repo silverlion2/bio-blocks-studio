@@ -33,7 +33,13 @@ The public site remains read-only. Admin writes remain limited to authenticated 
 - Invalid/corrupt draft: do not apply it; show an error state and allow explicit discard.
 - Storage unavailable/quota exceeded: keep editing state in memory and show that browser backup failed.
 - Network or Blob write error: keep the modal open, keep the draft, and allow retry or export.
-- Successful save: update the server timestamp, clear the local draft, and mark the editor saved.
+- Successful save: acknowledge the submitted immutable configuration snapshot. Update the displayed timestamp, clear the local recovery record and close the save dialog only if it is still the current draft; otherwise preserve the newer draft and its unsaved state.
+
+## 2026-11-06 request ownership
+
+The editor compares current and acknowledged configuration snapshots rather than clearing a dirty flag on every response. An in-flight save ref prevents duplicate requests; an AbortController invalidates completion after unmount. A valid response requires explicit success and a parseable server timestamp. Import reads have request identities plus captured configuration/version/language; a superseded, edited or reselected operation cannot commit its file. The existing draft codec, access-code redaction, reload recovery and missing-storage banner remain intact.
+
+Session signing and validation are extracted to `lib/session-token.ts` for direct crypto-boundary tests. `lib/auth.ts` retains cookie adaptation and secret precedence. Password validation accepts unknown runtime input and rejects non-string JSON values before hashing. The token/cookie format and seven-day validity remain compatible.
 
 ## Rollback
 

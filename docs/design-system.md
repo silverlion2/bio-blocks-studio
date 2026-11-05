@@ -29,3 +29,7 @@ The recovery strip sits below the sticky admin header and above the canvas. It m
 - Status text uses `role="status"`; failures use `role="alert"`.
 - Every action is a native button with a visible focus treatment and descriptive text.
 - Recovery does not rely on hover, color alone, or pointer-only interaction.
+
+## 2026-11-06 save and import feedback
+
+The existing unsaved indicator remains visible when a prior save completes with newer edits pending. A bilingual notice distinguishes saving the earlier snapshot from saving all edits. Invalid acknowledgment and network failures retain the open dialog and offer retry. A file-read conflict tells the owner that their edits were kept and requests file reselection. No recovery action or responsive layout is removed. Admin tabs now use the title `Site Editor`; complete editor accessibility remains a separate audit.

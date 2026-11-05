@@ -7,11 +7,11 @@ function safeCompare(left: string, right: string) {
   return timingSafeEqual(leftHash, rightHash);
 }
 
-export async function verifyPassword(password: string): Promise<boolean> {
+export async function verifyPassword(password: unknown): Promise<boolean> {
   const hash = process.env.ADMIN_PASSWORD_HASH;
   const plainPassword = process.env.ADMIN_PASSWORD;
 
-  if (!password) {
+  if (typeof password !== "string" || !password) {
     return false;
   }
 
