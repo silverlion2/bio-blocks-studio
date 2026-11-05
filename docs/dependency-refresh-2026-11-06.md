@@ -23,3 +23,11 @@ Clean npm ci installs 429 packages and reports zero audit entries. Full and prod
 The same production build also passes all 17 Edge browser cases in 39.3s. Both browser runners exit successfully and clean up their owned local server.
 
 Desktop/mobile screenshots were inspected: newer desktop edits remain present after an earlier save acknowledgment, and failed mobile saves retain the editable value and open modal. Test assertions cover retry, imports, scope isolation, recovery, page identity and unexpected browser errors. These are local production-build tests with synthetic credentials and empty Blob credentials; successful save transport is intercepted. Real hosted persistence, production rollout, complete drag/drop and comprehensive accessibility remain separate acceptance work. Browser plugin was unavailable, so verification uses Playwright. React 18 and Edge Runtime deprecation warnings remain follow-up items.
+
+## First Linux CI finding
+
+The first CI run passed install, audit and verify, then failed one of 17 browser cases: the mobile header's Saved text had collapsed beside the action controls. The downloaded screenshot confirms an actual responsive defect. New 320px/390px readability cases fail on the preceding local build too: the 320px status is hidden, and the 390px project-name area is only 1.16px wide. Visibility alone had missed the near-zero width on Windows.
+
+Use separate identity and action rows below the small breakpoint. Keep the existing larger layout. Preserve the original visibility assertion and add identity width, full unsaved text, nonoverlap, 44px target and overflow checks; do not retry away the failure or relax the test. The expanded browser suite has 19 cases.
+
+After the responsive fix, explicit production-build Chromium passes 19/19 (29.7s). The final SOP fast and release checks pass again, including 25 unit tests, lint/types/build, 19 Chromium cases (38.5s) and the official zero-entry audit. The readability screenshots wait for the transient sign-in toast to disappear and were visually inspected at both widths; project identity and Unsaved Changes are fully readable above the controls.

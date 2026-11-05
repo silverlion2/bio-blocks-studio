@@ -33,3 +33,6 @@ The recovery strip sits below the sticky admin header and above the canvas. It m
 ## 2026-11-06 save and import feedback
 
 The existing unsaved indicator remains visible when a prior save completes with newer edits pending. A bilingual notice distinguishes saving the earlier snapshot from saving all edits. Invalid acknowledgment and network failures retain the open dialog and offer retry. A file-read conflict tells the owner that their edits were kept and requests file reselection. No recovery action or responsive layout is removed. Admin tabs now use the title `Site Editor`; complete editor accessibility remains a separate audit.
+## Mobile editor header readability
+
+On narrow screens, project identity/save status and the action buttons occupy separate rows. A shrinking flex identity cell must not collapse to zero width beside controls. At 320px and 390px, keep a readable project-name area, fully visible unsaved text, at least 44px action targets, no control/status overlap and no horizontal overflow. Larger breakpoints retain the existing header layout.

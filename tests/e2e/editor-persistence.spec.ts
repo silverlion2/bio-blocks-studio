@@ -272,6 +272,35 @@ test('version and language imports preserve other scopes in the saved document',
   await expect(page.locator('header').getByText('Saved', { exact: true })).toBeVisible();
 });
 
+for (const width of [320, 390]) {
+  test(`mobile header keeps project identity and save state readable at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 844 });
+    await openEditor(page);
+    const header = page.locator('header');
+    const saved = header.getByText('Saved', { exact: true });
+    const title = saved.locator('..').locator('p').first();
+    expect((await title.boundingBox())!.width).toBeGreaterThanOrEqual(120);
+    await openSettings(page);
+    await projectName(page).fill('Readable mobile project');
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    const unsaved = header.getByText('Unsaved Changes', { exact: true });
+    await expect(unsaved).toBeVisible();
+    expect(await unsaved.evaluate(element => element.clientWidth > 0 && element.scrollWidth <= element.clientWidth)).toBe(true);
+    for (const name of ['Project Settings', 'Save']) {
+      const button = header.getByRole('button', { name, exact: true });
+      await expect(button).toBeVisible();
+      const box = (await button.boundingBox())!;
+      expect(box.width).toBeGreaterThanOrEqual(44);
+      expect(box.height).toBeGreaterThanOrEqual(44);
+      const statusBox = (await unsaved.boundingBox())!;
+      expect(box.x >= statusBox.x + statusBox.width || statusBox.x >= box.x + box.width || box.y >= statusBox.y + statusBox.height || statusBox.y >= box.y + box.height).toBe(true);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect(page.getByText('Signed in', { exact: true })).not.toBeVisible({ timeout: 10_000 });
+    await page.screenshot({ path: testInfo.outputPath(`mobile-header-${width}.png`) });
+  });
+}
+
 test('real API rejects unauthorized saves and missing storage preserves a mobile draft', async ({ page, request }, testInfo) => {
   expect((await request.put('/api/admin/config', { data: {} })).status()).toBe(401);
   await page.setViewportSize({ width: 390, height: 844 });

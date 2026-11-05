@@ -1378,7 +1378,7 @@ export function AdminVisualEditor({
     <main className="min-h-screen bg-white text-[#101010]">
       <header className="sticky top-0 z-40 border-b border-[#EAF0F8] bg-white">
         <div className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)] gap-2 px-5 py-3 md:flex md:items-center md:justify-between">
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 md:contents">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between md:contents">
             <div className="flex min-w-0 flex-1 items-center gap-3 md:order-1 md:flex-none">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{baseConfig.settings.projectName}</p>
