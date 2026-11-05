@@ -1,6 +1,6 @@
 # Editor persistence and scope integrity
 
-2026-11-06 final browser verification: Edge 17/17 (38.5s) and bundled Chromium 17/17 (39.0s), both with clean runner shutdown. This is local candidate evidence; the dependency audit below remains failed.
+2026-11-06 initial editor candidate verification: Edge 17/17 (38.5s) and bundled Chromium 17/17 (39.0s), both with clean runner shutdown. The audit failure recorded below belongs to that candidate; the subsequent [dependency remediation](dependency-refresh-2026-11-06.md) records updated dependencies and new validation.
 
 ## Product and design
 
@@ -22,4 +22,4 @@ This candidate starts at remote main `4dd15fe5b3a65b752f1b8eb5e5620d807ec62cfb` 
 
 The existing seven draft-codec tests and ten auth tests all pass. `npm ci`, `npm run verify`, production-build browser execution and configured SOP fast pass. The final Edge suite contains 17 scenarios, including the seven existing journeys; desktop and mobile use 1280/390px widths. Screenshots and browser assertions confirm draft retention, no horizontal mobile overflow in the tested flow, page identity, no framework overlay and no unexpected console/page errors. Explicitly induced network/400 errors are confined to their corresponding cases.
 
-The same unchanged dependency graph currently reports 18 official npm audit entries (9 moderate, 8 high, 1 critical). Historical zero-audit results do not apply to today's advisory data. Release/integration is not complete while this gate fails. The Edge Runtime deprecation remains separate. Actual Blob persistence, production deployment, complete drag/drop and comprehensive accessibility remain unverified; browser transport success is simulated and no remote data is written.
+The initial editor candidate's unchanged dependency graph reported 18 official npm audit entries (9 moderate, 8 high, 1 critical), preventing integration at that point. That failed result remains historical evidence; the subsequent remediation has a separate audit and browser run. React 18 and Edge Runtime deprecation warnings remain separate. Actual Blob persistence, production deployment, complete drag/drop and comprehensive accessibility remain unverified; browser transport success is simulated and no remote data is written.
