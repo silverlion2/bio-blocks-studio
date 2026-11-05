@@ -363,7 +363,11 @@ export function AdminVisualEditor({
   const [overrideDraft, setOverrideDraft] = useState<{ targetVariantId: string; targetLocale: string; sourceVariantId: string; sourceLocale: string } | null>(
     null
   );
-  const [isDirty, setIsDirty] = useState(false);
+  const [savedConfig, setSavedConfig] = useState(baseConfig);
+  const isDirty = baseConfig !== savedConfig;
+  const baseConfigRef = useRef(baseConfig);
+  const pendingSaveRef = useRef<AbortController | null>(null);
+  const importRequestRef = useRef(0);
   const [isSaving, setIsSaving] = useState(false);
   const [draftRecovery, setDraftRecovery] = useState<DraftRecoveryState>({ status: "checking" });
   const [localDraftWriteError, setLocalDraftWriteError] = useState("");
@@ -498,6 +502,15 @@ export function AdminVisualEditor({
   }, [config]);
 
   useEffect(() => {
+    baseConfigRef.current = baseConfig;
+  }, [baseConfig]);
+
+  useEffect(() => () => {
+    pendingSaveRef.current?.abort();
+    importRequestRef.current += 1;
+  }, []);
+
+  useEffect(() => {
     activeVariantIdRef.current = resolvedActiveVariantId;
   }, [resolvedActiveVariantId]);
 
@@ -614,12 +627,10 @@ export function AdminVisualEditor({
 
   function update(next: SiteConfig) {
     setConfig(normalizeContentFlowConfig(next));
-    setIsDirty(true);
   }
 
   function updateBaseConfig(next: SiteConfig) {
     setBaseConfig(normalizeContentFlowConfig(next));
-    setIsDirty(true);
   }
 
   function getTopBarVariantLanguages(variantId: string) {
@@ -679,7 +690,6 @@ export function AdminVisualEditor({
   function restoreLocalDraft() {
     if (draftRecovery.status !== "available") return;
     setBaseConfig(normalizeContentFlowConfig(restoreAdminDraftConfig(draftRecovery.draft.config, baseConfig)));
-    setIsDirty(true);
     setRemoteSaveError("");
     setDraftRecovery({ status: "current", savedAt: draftRecovery.draft.savedAt });
   }
@@ -704,8 +714,23 @@ export function AdminVisualEditor({
   }
 
   async function importConfig(file: File) {
-    const text = await file.text();
-    const parsed = JSON.parse(text) as unknown;
+    const requestId = ++importRequestRef.current;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(await file.text()) as unknown;
+    } catch (error) {
+      if (requestId !== importRequestRef.current) return;
+      throw error;
+    }
+    if (requestId !== importRequestRef.current) return;
+    if (
+      baseConfigRef.current !== baseConfig ||
+      activeVariantIdRef.current !== resolvedActiveVariantId ||
+      activeLocaleRef.current !== resolvedActiveLocale
+    ) {
+      toast.error(copy.importFailed, { description: copy.importDraftChanged });
+      return;
+    }
     const result = validateSiteConfig(parsed);
 
     if (!result.success) {
@@ -755,7 +780,6 @@ export function AdminVisualEditor({
         )
       })
     );
-    setIsDirty(true);
   }
 
   function applyBlockPlacement(
@@ -1275,6 +1299,7 @@ export function AdminVisualEditor({
   }
 
   async function save(): Promise<boolean> {
+    if (pendingSaveRef.current) return false;
     if (draftRecovery.status === "available") {
       toast.error(copy.saveFailed, {
         description:
@@ -1291,25 +1316,36 @@ export function AdminVisualEditor({
       return false;
     }
 
+    const controller = new AbortController();
+    pendingSaveRef.current = controller;
     setIsSaving(true);
     setRemoteSaveError("");
     try {
       const response = await fetch("/api/admin/config", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(result.data)
+        body: JSON.stringify(result.data),
+        signal: controller.signal
       });
-      const body = (await response.json().catch(() => null)) as { error?: string; updatedAt?: string } | null;
+      const body = (await response.json().catch(() => null)) as { success?: unknown; error?: unknown; updatedAt?: unknown } | null;
+      if (controller.signal.aborted) return false;
 
-      if (!response.ok) {
-        const message = body?.error ?? "Unknown error";
+      if (!response.ok || body?.success !== true || typeof body.updatedAt !== "string" || !Number.isFinite(Date.parse(body.updatedAt))) {
+        const message = typeof body?.error === "string" ? body.error : copy.saveRetry;
         setRemoteSaveError(message);
         toast.error(copy.saveFailed, { description: message });
         return false;
       }
 
-      setBaseConfig((current) => ({ ...current, updatedAt: body?.updatedAt ?? new Date().toISOString() }));
-      setIsDirty(false);
+      const unchanged = baseConfigRef.current === baseConfig;
+      const acknowledgedConfig = { ...baseConfig, updatedAt: body.updatedAt };
+      setBaseConfig((current) => current === baseConfig ? acknowledgedConfig : current);
+      setSavedConfig(acknowledgedConfig);
+      // Acknowledging an older request must not erase a newer recovery draft.
+      if (!unchanged) {
+        toast.success(copy.saveEarlierSuccess);
+        return false;
+      }
       try {
         window.localStorage.removeItem(adminDraftStorageKey);
         setDraftRecovery({ status: "none" });
@@ -1324,6 +1360,7 @@ export function AdminVisualEditor({
       toast.success(copy.saveSuccess);
       return true;
     } catch {
+      if (controller.signal.aborted) return false;
       const message =
         editorLanguage === "zh-CN"
           ? "无法连接保存服务。本地草稿仍保留在此浏览器。"
@@ -1332,7 +1369,8 @@ export function AdminVisualEditor({
       toast.error(copy.saveFailed, { description: message });
       return false;
     } finally {
-      setIsSaving(false);
+      if (pendingSaveRef.current === controller) pendingSaveRef.current = null;
+      if (!controller.signal.aborted) setIsSaving(false);
     }
   }
 
@@ -1340,7 +1378,7 @@ export function AdminVisualEditor({
     <main className="min-h-screen bg-white text-[#101010]">
       <header className="sticky top-0 z-40 border-b border-[#EAF0F8] bg-white">
         <div className="mx-auto grid max-w-[1180px] grid-cols-[minmax(0,1fr)] gap-2 px-5 py-3 md:flex md:items-center md:justify-between">
-          <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 md:contents">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between md:contents">
             <div className="flex min-w-0 flex-1 items-center gap-3 md:order-1 md:flex-none">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{baseConfig.settings.projectName}</p>

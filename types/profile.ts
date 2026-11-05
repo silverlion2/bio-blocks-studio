@@ -32,5 +32,5 @@ export type Profile = {
   email?: string;
   socialLinks: SocialLink[];
   moduleOrder: ProfileModule[];
-  visibleModules: Record<ProfileModule, boolean>;
+  visibleModules: Partial<Record<ProfileModule, boolean>>;
 };

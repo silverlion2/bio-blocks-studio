@@ -21,3 +21,12 @@ Last updated: 2026-09-15
 | External persistence | Successful Blob save/upload | Not exercised; no real Blob token permitted | Explicit gap, never counted as pass |
 | Scope variants | Real deployed content and drag-drop | Not exercised by this slice | Explicit gap/manual review |
 | Quality | Test, lint, typecheck, production build, E2E, audit | All configured gates pass | CLI/SOP fast + release |
+
+## 2026-11-06 additional regressions
+
+- `tests/password.test.mjs` and `tests/session-token.test.mjs`: malformed credentials; hash precedence; legacy valid session; exact expiry; altered, oversized and structurally invalid tokens. The seven existing draft-codec tests stay in `npm test`.
+- `tests/e2e/editor-persistence.spec.ts`: delayed save versus later edit, recovery-record retention and clearing after retry; transport failure; non-JSON and incomplete success acknowledgments; invalid/valid scoped import/export; delayed import versus edits or selected version; overlapping file reads; saved-document version/language boundaries; actual unauthorized/missing-storage responses and mobile draft retention.
+- The existing seven `admin-editor.spec.ts` journeys remain required. All browser tests use the existing exclusive local production-server runner. Success transport is intercepted; this is not actual Blob persistence validation.
+- `tests/config-validation.test.mjs`: actual default/recovery round-trip, legacy defaults and sparse visibility, scoped metadata/language records, URL policy, duplicate/reference errors and malformed JSON values under patched Zod 4.
+- `tests/dependency-consumers.test.mjs`: actual TypeScript project-service matching/rejection through patched minimatch and Blob/OIDC CLI config schemas through patched Zod. Synthetic temporary files and in-memory values only; no user config or credentials.
+- Mobile header: 320px/390px project identity width, complete unsaved status, nonoverlapping 44px actions and no overflow. First Linux CI exposed a collapsed identity cell; both new cases fail against the preceding build before the responsive fix.

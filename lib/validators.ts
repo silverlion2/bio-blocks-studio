@@ -1,11 +1,11 @@
 import { z } from "zod";
 import type { SiteConfig } from "@/types/site-config";
-import { blockActionTypes } from "@/constants/block-types";
-import { blockSizes } from "@/constants/block-sizes";
-import { profileModules } from "@/constants/profile-modules";
-import { topLevelBlockSectionId } from "@/lib/utils";
+import { blockActionTypes } from "../constants/block-types.ts";
+import { blockSizes } from "../constants/block-sizes.ts";
+import { profileModules } from "../constants/profile-modules.ts";
+import { topLevelBlockSectionId } from "./utils.ts";
 
-const profileModuleSchema = z.enum(profileModules as [string, ...string[]]);
+const profileModuleSchema = z.enum(profileModules);
 const safeUrlSchema = z.string().refine((value) => value === "" || isSafeUrl(value), {
   message: "URL must use http, https, mailto, tel, or a relative path"
 });
@@ -44,7 +44,7 @@ const profileSchema = z.object({
   email: z.string().optional(),
   socialLinks: z.array(socialLinkSchema),
   moduleOrder: z.array(profileModuleSchema),
-  visibleModules: z.record(profileModuleSchema, z.boolean())
+  visibleModules: z.partialRecord(profileModuleSchema, z.boolean())
 });
 
 const sectionSchema = z.object({
@@ -68,11 +68,11 @@ const blockSchema = z.object({
   title: z.string().min(1),
   subtitle: z.string().optional(),
   description: z.string().optional(),
-  size: z.enum(blockSizes as [string, ...string[]]),
+  size: z.enum(blockSizes),
   responsiveSizes: z
     .object({
-      desktop: z.enum(blockSizes as [string, ...string[]]).optional(),
-      mobile: z.enum(blockSizes as [string, ...string[]]).optional()
+      desktop: z.enum(blockSizes).optional(),
+      mobile: z.enum(blockSizes).optional()
     })
     .optional(),
   placements: z
@@ -95,11 +95,11 @@ const blockSchema = z.object({
   icon: z.string().optional(),
   badge: z.string().optional(),
   href: safeUrlSchema.optional(),
-  actionType: z.enum(blockActionTypes as [string, ...string[]]),
+  actionType: z.enum(blockActionTypes),
   openInNewTab: z.boolean().optional(),
   backgroundColor: z.string().optional(),
   textColor: z.string().optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
   isVisible: z.boolean(),
   isFeatured: z.boolean(),
   sortOrder: z.number().int().nonnegative(),
@@ -164,7 +164,7 @@ const variantSettingsSchema = z
               })
             )
             .optional(),
-          languageSettings: z.record(z.object({ isEnabled: z.boolean() })).optional()
+          languageSettings: z.record(z.string(), z.object({ isEnabled: z.boolean() })).optional()
         })
       )
       .default([{ id: "main", name: "主版本", accessCode: "", isEnabled: true, sortOrder: 1 }])
@@ -205,7 +205,7 @@ const contentSnapshotSchema = z.object({
   seoOgImage: z.string().optional()
 });
 
-export const siteConfigSchema = z
+export const siteConfigSchema: z.ZodType<SiteConfig> = z
   .object({
     version: z.number().int().positive(),
     profile: profileSchema,
@@ -213,7 +213,7 @@ export const siteConfigSchema = z
     blocks: z.array(blockSchema),
     theme: themeSchema,
     settings: settingsSchema,
-    contentVariants: z.record(contentSnapshotSchema).optional().default({}),
+    contentVariants: z.record(z.string(), contentSnapshotSchema).optional().default({}),
     updatedAt: z.string()
   })
   .superRefine((config, ctx) => {
@@ -298,7 +298,7 @@ export const siteConfigSchema = z
       }
       moduleIds.add(profileModule);
     }
-  }) as z.ZodType<SiteConfig>;
+  });
 
 const reservedAccessCodes = new Set(["admin", "api", "icon", "_next", "favicon.ico", "reset"]);
 

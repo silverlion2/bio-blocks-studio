@@ -1,8 +1,8 @@
-import { createHash, createHmac, timingSafeEqual } from "crypto";
+import { createHash } from "crypto";
 import { cookies } from "next/headers";
+import { createSessionToken, verifySessionToken, SESSION_MAX_AGE_SECONDS } from "./session-token";
 
 export const SESSION_COOKIE_NAME = "bio_template_admin_session";
-const MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 const MIN_SECRET_LENGTH = 32;
 
 function getSecret() {
@@ -15,44 +15,12 @@ function getSecret() {
   return credentialSecret ? createHash("sha256").update(`admin-session:${credentialSecret}`).digest("hex") : "";
 }
 
-function base64url(input: Buffer | string) {
-  return Buffer.from(input).toString("base64url");
-}
-
-function sign(body: string) {
-  return createHmac("sha256", getSecret()).update(body).digest("base64url");
-}
-
 export async function createSession(): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-  const body = base64url(JSON.stringify({ iat: now, exp: now + MAX_AGE_SECONDS }));
-  return `${body}.${sign(body)}`;
+  return createSessionToken(getSecret());
 }
 
 export async function verifySession(token?: string): Promise<boolean> {
-  const secret = getSecret();
-  if (!secret || !token) {
-    return false;
-  }
-
-  const [body, signature] = token.split(".");
-  if (!body || !signature) {
-    return false;
-  }
-
-  const expected = sign(body);
-  const expectedBuffer = Buffer.from(expected);
-  const actualBuffer = Buffer.from(signature);
-  if (expectedBuffer.length !== actualBuffer.length || !timingSafeEqual(expectedBuffer, actualBuffer)) {
-    return false;
-  }
-
-  try {
-    const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8")) as { exp?: number };
-    return typeof payload.exp === "number" && payload.exp > Math.floor(Date.now() / 1000);
-  } catch {
-    return false;
-  }
+  return verifySessionToken(token, getSecret());
 }
 
 export async function getCurrentSessionIsValid() {
@@ -65,7 +33,7 @@ export async function setSessionCookie(token: string) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
-    maxAge: MAX_AGE_SECONDS
+    maxAge: SESSION_MAX_AGE_SECONDS
   });
 }
 

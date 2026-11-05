@@ -35,9 +35,13 @@ The primary user is a single site owner editing public portfolio content. They n
 1. A valid edit survives a reload when the user chooses Restore.
 2. Missing Blob configuration is visible before the user attempts to publish.
 3. A failed remote save never clears the draft or closes the active modal.
-4. A successful remote save clears the browser draft.
+4. A successful remote save clears the browser draft only if it acknowledges the current draft. Edits made while the request is pending must remain unpublished and recoverable.
 5. Recovery actions are keyboard reachable and usable at phone width.
 
 ### Stop conditions
 
 Do not proceed if the implementation requires a real credential, a live external write, weaker validation/authentication, or storing data outside the current browser without explicit user action.
+
+## 2026-11-06: asynchronous save and import integrity
+
+Keep current edits and their browser recovery copy when an earlier save completes. Reject incomplete success responses, retain the existing failed-save retry flow, and prevent older file reads from replacing a changed draft or a different selected version/language. The admin title identifies the editor and its pages opt out of indexing. Malformed login credentials and session tokens fail closed without changing valid-session compatibility. See `editor-persistence-quality-2026-11-06.md` for the implementation and remaining release gates.

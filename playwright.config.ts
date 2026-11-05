@@ -12,11 +12,12 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: "list",
-  outputDir: "output/playwright/test-results",
+  outputDir: process.env.PLAYWRIGHT_OUTPUT_DIR || "output/playwright/test-results",
   use: {
     ...devices["Desktop Chrome"],
     baseURL,
     locale: "en-US",
+    channel: process.env.PLAYWRIGHT_CHANNEL || undefined,
     trace: "retain-on-failure",
     screenshot: "only-on-failure"
   }

@@ -1,5 +1,5 @@
 import type { SiteConfig } from "@/types/site-config";
-import { topLevelBlockSectionId } from "@/lib/utils";
+import { topLevelBlockSectionId } from "./utils.ts";
 
 const now = "2026-08-20T00:00:00.000Z";
 
